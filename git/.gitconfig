@@ -1,0 +1,23 @@
+[user]
+	name = veli demirel
+	email = demirel.veli@yahoo.com
+[alias]
+	bl = "!f() { if [[ \"$#\" -eq \"2\" ]]; then git blame -L $1 -- $2; else echo \"Usage: git bl <line-num-1>,<line-num-2> <file-name>\"; fi }; f"
+	l = "!f() { git log -${1:-1}; }; f"
+	sh = "!f() { git show -${1:-1}; }; f"
+	a = add
+	aa = add .
+	b = blame --
+	c = commit
+	ca = commit --amend
+	cm = commit -m
+	cp = cherry-pick
+	cpc = cherry-pick --continue
+	d = diff
+	ds = diff --staged
+	s = status
+	su = status -uno
+	st = stash
+	sp = stash pop
+	pr = pull --rebase
+	rc = rebase --continue
