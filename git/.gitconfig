@@ -21,3 +21,6 @@
 	sp = stash pop
 	pr = pull --rebase
 	rc = rebase --continue
+	v = commit --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
+	va = commit --amend --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
+	vm = commit -m --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
