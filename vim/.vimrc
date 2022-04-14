@@ -44,7 +44,7 @@ Plugin 'preservim/tagbar'		    " shows tags for a current file
 Plugin 'morhetz/gruvbox'		    " for colorscheme
 Plugin 'vim-airline/vim-airline'	    " status bar
 Plugin 'vim-airline/vim-airline-themes'	    " status bar themes
-
+Plugin 'Kadiryanik/cs-in-qf.vim'        " cscope in quickfix
 "Plugin 'tpope/vim-fugitive'
 call vundle#end()	    " required
 filetype plugin indent on   " required
@@ -171,32 +171,56 @@ nmap <silent> <leader>gr :YcmCompleter GoToReferences<CR>
 " CSCOPE shortcuts. Creating cscope file: cscope -q -R
 " find this C symbol
 nmap <leader><leader>0 :cs find s <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>0 :cs find s <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>0 :Qcs s<CR>
 " find this definition
 nmap <leader><leader>1 :cs find g <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>1 :cs find g <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>1 :Qcs g<CR>
 " find functions called by this function
 nmap <leader><leader>2 :cs find d <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>2 :cs find d <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>2 :Qcs d<CR>
 " find functions calling this function
 nmap <leader><leader>3 :cs find c <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>3 :cs find c <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>3 :Qcs c<CR>
 " find this text string
 nmap <leader><leader>4 :cs find t <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>4 :cs find t <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>4 :Qcs t<CR>
 " find this egrep pattern
 nmap <leader><leader>5 :cs find e <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>5 :cs find e <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>5 :Qcs e<CR>
 " find this file
 nmap <leader><leader>6 :cs find f <C-R>=expand("<cfile>")<CR><CR>
-nmap <leader>6 :cs find f <C-R>=expand("<cfile>")<CR><CR>
+nmap <leader>6 :Qcs f<CR>
 " find files #including this file
 nmap <leader><leader>7 :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
-nmap <leader>7 :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
+nmap <leader>7 :Qcs i<CR>
 " find places where this symbol is assigned a value
 nmap <leader><leader>8 :cs find a <C-R>=expand("<cword>")<CR><CR>
-nmap <leader>8 :cs find a <C-R>=expand("<cword>")<CR><CR>
+nmap <leader>8 :Qcs a<CR>
 
+" quickfix
+nnoremap <silent> <C-j> :cprevious<CR>
+nnoremap <silent> <C-n> :cnext<CR>
+nnoremap <silent> <C-q> :ToggleQF<CR>
+ 
+" cscope shortcuts.
+" find this C symbol
+nmap <leader><leader>s :Qcs s<CR>
+" find this definition
+nmap <leader><leader>g :Qcs g<CR>
+" find functions called by this function
+nmap <leader><leader>d :Qcs d<CR>
+" find functions calling this function
+nmap <leader><leader>c :Qcs c<CR>
+" find this text string
+" nmap <leader><leader>t :Qcs t<CR>
+" find this egrep pattern
+nmap <leader><leader>e :Qcs e<CR>
+" find this file
+nmap <leader><leader>f :Qcs f<CR>
+" find files #including this file
+nmap <leader><leader>i :Qcs i<CR>
+" find places where this symbol is assigned a value
+nmap <leader><leader>a :Qcs a<CR>
 " buffer shortcuts
 nmap <leader>bp :bp<CR>
 nmap <leader>bn :bn<CR>
