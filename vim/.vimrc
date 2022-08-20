@@ -44,8 +44,9 @@ Plugin 'preservim/tagbar'		    " shows tags for a current file
 Plugin 'morhetz/gruvbox'		    " for colorscheme
 Plugin 'vim-airline/vim-airline'	    " status bar
 Plugin 'vim-airline/vim-airline-themes'	    " status bar themes
+Plugin 'zivyangll/git-blame.vim'		" git blame
 Plugin 'Kadiryanik/cs-in-qf.vim'        " cscope in quickfix
-"Plugin 'tpope/vim-fugitive'
+Plugin 'tpope/vim-fugitive'
 call vundle#end()	    " required
 filetype plugin indent on   " required
 
@@ -59,6 +60,7 @@ set t_TI=
 set t_TE=
 
 " leader key
+nnoremap <SPACE> <Nop>
 let mapleader = " "
 
 " Easy jump for marks
@@ -88,8 +90,8 @@ map <F8> :TagbarOpen fjc<CR>
 map <leader>fl :TagbarOpen fjc<CR>
 
 " open new terminal
-map <leader><leader>t :term bash<CR>
-map <leader><leader>T :vert term bash<CR>
+nmap <leader><leader>t :term bash<CR>
+nmap <leader><leader>T :vert term bash<CR>
 " switch terminal to normal mode
 tnoremap <C-n> <C-w>N
 " quit terminal split and bash
@@ -108,25 +110,25 @@ vnoremap <leader>rs y:%s/<C-R>"//gic
 vnoremap <leader>rw y:%s/\<<C-R>"\>//gic
 
 " indent profile default (with tab)
-map <leader>ipd :set noexpandtab tabstop=8 softtabstop=4 shiftwidth=4<CR>
+nmap <leader>ipd :set noexpandtab tabstop=8 softtabstop=4 shiftwidth=4<CR>
 " indent profile 8 (with tab)
-map <leader>ip8 :set noexpandtab tabstop=8 softtabstop=8 shiftwidth=8<CR>
+nmap <leader>ip8 :set noexpandtab tabstop=8 softtabstop=8 shiftwidth=8<CR>
 
 " indent profile space 2
-map <leader>ips2 :set expandtab tabstop=2 softtabstop=2 shiftwidth=2<CR>
+nmap <leader>ips2 :set expandtab tabstop=2 softtabstop=2 shiftwidth=2<CR>
 " indent profile space 3
-map <leader>ips3 :set expandtab tabstop=3 softtabstop=3 shiftwidth=3<CR>
+nmap <leader>ips3 :set expandtab tabstop=3 softtabstop=3 shiftwidth=3<CR>
 " indent profile space 4
-map <leader>ips4 :set expandtab tabstop=4 softtabstop=4 shiftwidth=4<CR>
+nmap <leader>ips4 :set expandtab tabstop=4 softtabstop=4 shiftwidth=4<CR>
 " indent profile space 8
-map <leader>ips8 :set expandtab tabstop=8 softtabstop=8 shiftwidth=8<CR>
+nmap <leader>ips8 :set expandtab tabstop=8 softtabstop=8 shiftwidth=8<CR>
 
 " maps for navigate between splits
-map <leader>w <C-w>w
-map <leader>h <C-w>h
-map <leader>j <C-w>j
-map <leader>k <C-w>k
-map <leader>l <C-w>l
+nnoremap <leader>w <C-w>w
+nnoremap <leader>h <C-w>h
+nnoremap <leader>j <C-w>j
+nnoremap <leader>k <C-w>k
+nnoremap <leader>l <C-w>l
 
 " no highlight
 nnoremap <silent> <leader>nh :nohl<CR>
@@ -221,10 +223,14 @@ nmap <leader><leader>f :Qcs f<CR>
 nmap <leader><leader>i :Qcs i<CR>
 " find places where this symbol is assigned a value
 nmap <leader><leader>a :Qcs a<CR>
+
 " buffer shortcuts
 nmap <leader>bp :bp<CR>
 nmap <leader>bn :bn<CR>
 nmap <leader>bd :bd<CR>
+
+" git blame
+nnoremap <Leader><leader>b :<C-u>call gitblame#echo()<CR>
 
 " nerdTree maps
 nnoremap <silent> <leader>t :NERDTreeToggle<CR>
@@ -232,16 +238,16 @@ nnoremap <silent> <leader>gf :NERDTreeFind<CR>
 
 " vim-workspace gives error when nerd tree left open in session
 " so close it and quit all for successfully session restore
-nnoremap <silent> <leader>qa :NERDTreeClose<CR> :qa!<CR>
-nnoremap <silent> <leader>qw :NERDTreeClose<CR> :wqa<CR>
-nnoremap <silent> <leader>qq :NERDTreeClose<CR> :qa<CR>
+nnoremap <silent> <leader>qa :NERDTreeClose<CR>:qa!<CR>
+nnoremap <silent> <leader>qw :NERDTreeClose<CR>:wqa<CR>
+nnoremap <silent> <leader>qq :NERDTreeClose<CR>:qa<CR>
 
 " move page up and down one line keep cursor same in line
 map <C-Up> <C-Y>
 map <C-Down> <C-E>
 imap <C-Up> <ESC> <C-Y>i
 imap <C-Down> <ESC> <C-E>i
-
+" move cursor
 map <C-Left> <C-o>
 map <C-Right> <C-i>
 " move current line up and down
@@ -366,11 +372,26 @@ nmap <leader>ff :Ag -U -w -s <C-R><C-A>
 highlight GitGutterAdd guifg=#009900 ctermfg=Green
 highlight GitGutterChange guifg=#bbbb00 ctermfg=Yellow
 highlight GitGutterDelete guifg=#ff2222 ctermfg=Red
-nmap ) :GitGutterNextHunk <CR>
-nmap ( :GitGutterPrevHunk <CR>
+nmap ) :GitGutterNextHunk<CR>
+nmap ( :GitGutterPrevHunk<CR>
 let g:gitgutter_map_keys = 0
 " toggle highlighting
-nmap <leader>gh :GitGutterLineHighlightsToggle <CR>
+nmap <leader>gh :GitGutterLineHighlightsToggle<CR>
+
+" vim-fugitive mappings
+nmap <leader>gs :Git<CR>
+nmap <leader>gl :Git log<CR>
+nmap <leader>gb :Git blame<CR>
+nmap <leader>gm :Git mergetool<CR>
+" shows only unstaged changes
+nmap <leader>gd :Gvdiffsplit<CR>
+nmap <leader>gt :Git difftool<CR>
+" shows also staged changes
+nmap <leader>ggd :Gvdiffsplit HEAD<CR>
+nmap <leader>ggt :Git difftool HEAD<CR>
+" jump prev-next in Gvdiff
+nmap <A-Left> [c
+nmap <A-Right> ]c
 
 " colorscheme settings
 colorscheme gruvbox
@@ -389,9 +410,10 @@ let g:airline#extensions#tabline#show_buffers = 0	" dont show buffers in the tab
 let g:airline#extensions#tabline#show_splits = 0	" disables the buffer name that displays on the right of the tabline
 let g:airline#extensions#tabline#show_tab_type = 0	" disables the weird ornage arrow on the tabline
 let g:airline#extensions#whitespace#checks = [ ]	" [ 'indent', 'trailing', 'long', 'mixed-indent-file' ]
+let g:airline_section_z = airline#section#create(['windowswap', 'obsession', '%p%%', 'colnr', 'linenr', 'maxlinenr'])
 
 " save and load folding texts
-autocmd BufWinLeave *.* mkview
+autocmd BufWinLeave *.* mkview!
 autocmd BufWinEnter *.* silent loadview
 
 " Usefull tips
