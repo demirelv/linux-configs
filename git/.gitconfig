@@ -3,8 +3,9 @@
 	email = demirel.veli@yahoo.com
 [alias]
 	bl = "!f() { if [[ \"$#\" -eq \"2\" ]]; then git blame -L $1 -- $2; else echo \"Usage: git bl <line-num-1>,<line-num-2> <file-name>\"; fi }; f"
-	l = "!f() { git log -${1:-1}; }; f"
 	sh = "!f() { git show -${1:-1}; }; f"
+	l = "log --pretty=format:\"%C(auto)%h %C(green)%s\""
+	ll = "log --pretty=format:\"%C(auto)%h %C(green)%s %C(blue)(%aN) %C(auto)%ar\""
 	a = add
 	aa = add .
 	b = blame --
@@ -24,3 +25,5 @@
 	v = commit --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
 	va = commit --amend --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
 	vm = commit -m --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
+[core]
+	editor = vim

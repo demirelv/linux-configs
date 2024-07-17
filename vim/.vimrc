@@ -416,6 +416,19 @@ let g:airline_section_z = airline#section#create(['windowswap', 'obsession', '%p
 autocmd BufWinLeave *.* mkview!
 autocmd BufWinEnter *.* silent loadview
 
+" Remap for destroying trailing whitespace cleanly
+nnoremap <Leader>gg :%!cat -s<CR>
+
+nnoremap <Leader>g :let _save_pos=getpos(".") <Bar>
+    \ :let _s=@/ <Bar>
+    \ :%s/\s\+$//e <Bar>
+    \ :let @/=_s <Bar>
+    \ :nohl <Bar>
+    \ :unlet _s<Bar>
+    \ :normal gg=G <Bar>
+    \ :call setpos('.', _save_pos)<Bar>
+    \ :unlet _save_pos<CR><CR>
+
 " Usefull tips
 " u			-> for Undo
 " Ctrl+R		-> for Redo
