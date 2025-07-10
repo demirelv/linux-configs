@@ -6,6 +6,9 @@ sudo apt-get install gitk
 
 # vim					# includes cscope and fzf installation, too.
 (cd vim && ./install.sh)
+# nvim					# includes cscope and fzf installation, too.
+(cd nvim && ./install.sh)
+
 
 # status bar indicator
 sudo apt-get install indicator-multiload
