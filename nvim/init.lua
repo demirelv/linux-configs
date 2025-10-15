@@ -12,7 +12,7 @@ vim.g.mapleader = " "
 
 local map = vim.keymap.set
 local opts = { noremap = true, silent = true }
-
+vim.cmd("syntax on")
 -- Otomatik session yolu
 local session_path = vim.fn.getcwd() .. "/Session.vim"
 
@@ -29,11 +29,19 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "red" })
+vim.api.nvim_set_hl(0, "EmptyLine", { bg = "darkgray" })
+vim.api.nvim_set_hl(0, "TodoSpace", { bg = "yellow" })
+vim.cmd [[
+  syntax match ExtraWhitespace /\s\+$/
+  syntax match EmptyLine /^\s*$/
+  syntax match TodoSpace /TODO\s\+/
+]]
 -- === Load plugins ===
 require("lazy").setup({
   { "junegunn/fzf", build = "./install --all" },
   { "junegunn/fzf.vim" },
-  { "dhananjaylatkar/cscope_maps.nvim",
+  { "demirelv/cscope_maps.nvim",
      dependencies = {
        "nvim-telescope/telescope.nvim", -- optional [for picker="telescope"]
        "ibhagwan/fzf-lua", -- optional [for picker="fzf-lua"]
@@ -50,21 +58,74 @@ require("lazy").setup({
 
 -- Colorscheme
   { "ellisonleao/gruvbox.nvim", priority = 1000, config = function()
-    vim.cmd("colorscheme gruvbox")
-  end },
+--    vim.cmd("colorscheme gruvbox")
 
+  end },
+  { "folke/tokyonight.nvim", config = function()
+    vim.cmd("colorscheme tokyonight-night")
+    vim.cmd("syntax enable")
+
+    vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#FF0000" })
+    vim.api.nvim_set_hl(0, "EmptyLine", { bg = "#FF2222" })
+    vim.api.nvim_set_hl(0, "TodoSpace", { bg = "#FFFF00", fg = "#000000" })
+
+    local function set_whitespace_highlight()
+      vim.fn.matchadd("ExtraWhitespace", [[\s\+$]])
+      vim.fn.matchadd("EmptyLine", [[\s\+$]])
+      vim.fn.matchadd("TodoSpace", [[TODO\s\+]])
+    end
+
+    vim.api.nvim_create_autocmd("ColorScheme", {
+      pattern = "*",
+      callback = function()
+        vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#FF0000" })
+        vim.api.nvim_set_hl(0, "EmptyLine", { bg = "#444444" })
+        vim.api.nvim_set_hl(0, "TodoSpace", { bg = "#FFFF00", fg = "#000000" })
+        set_whitespace_highlight()
+      end,
+    })
+    set_whitespace_highlight()
+    end },
   -- Treesitter
   { "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     config = function()
     require'nvim-treesitter.configs'.setup {
-      ensure_installed = { "c", "cpp", "lua", "bash", "python" }, -- örnek
+      ensure_installed = { "c", "cpp", "lua", "bash", "python" },
       highlight = { enable = true },
       indent = { enable = true },
     }
   end
  },
-  -- LSP config
+{
+  "catppuccin/nvim",
+  name = "catppuccin",
+  config = function()
+    --vim.cmd("colorscheme catppuccin")
+    vim.cmd("syntax enable")
+    vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#FF0000" })
+    vim.api.nvim_set_hl(0, "EmptyLine", { bg = "#444444" })
+    vim.api.nvim_set_hl(0, "TodoSpace", { bg = "#FFFF00", fg = "#000000" })
+
+    local function set_whitespace_highlight()
+      vim.fn.matchadd("ExtraWhitespace", [[\s\+$]])
+      vim.fn.matchadd("EmptyLine", [[\s\+$]])
+      vim.fn.matchadd("TodoSpace", [[TODO\s\+]])
+    end
+    vim.api.nvim_create_autocmd("ColorScheme", {
+      pattern = "*",
+      callback = function()
+        vim.api.nvim_set_hl(0, "ExtraWhitespace", { bg = "#FF0000" })
+        vim.api.nvim_set_hl(0, "EmptyLine", { bg = "#444444" })
+        vim.api.nvim_set_hl(0, "TodoSpace", { bg = "#FFFF00", fg = "#000000" })
+        set_whitespace_highlight()
+      end,
+    })
+
+    set_whitespace_highlight()
+  end,
+},
+    -- LSP config
   { "neovim/nvim-lspconfig", config = function()
     local lspconfig = require("lspconfig")
     lspconfig.clangd.setup {}
@@ -140,48 +201,6 @@ map({ 'n', 'v' }, '<leader>gi', '<cmd>Telescope lsp_implementations<CR>')
 map({ 'n', 'v' }, '<leader>ds', '<cmd>Telescope lsp_document_symbols<CR>')
 map({ 'n', 'v' }, '<leader>ws', '<cmd>Telescope lsp_workspace_symbols<CR>')
 map({ 'n', 'v' }, '<leader>ld', '<cmd>Telescope diagnostics<CR>')
-
-vim.api.nvim_create_user_command("C", function(opts)
-  local args = vim.split(opts.args, " ")
-  local key = args[1]
-  table.remove(args, 1)
-
-  local map = {
-    ["0"] = "Cs find s",
-    ["1"] = "Cs find g",
-    ["2"] = "Cs find d",
-    ["3"] = "Cs find c",
-    ["4"] = "Cs find t",
-    ["5"] = "Cs find e",
-    ["6"] = "Cs find f",
-    ["7"] = "Cs find i",
-    ["8"] = "Cs find a",
-    ["9"] = "Cs db build",
-    ["init"] = "Cs db build",
-    ["add"] = "Cs db add",
-  }
-
-  if map[key] then
-    local full_cmd = map[key] .. " " .. table.concat(args, " ")
-    vim.cmd(full_cmd)
-  else
-    print("Geçersiz komut: " .. key)
-  end
-end, { nargs = "+", 
-       complete = "file",
-    })
-
--- CSCOPE shortcuts. Creating cscope file: cscope -q -R
-map({ 'n', 'v' }, '<leader>0', "<cmd>CsPrompt s<CR><CR>")
-map({ 'n', 'v' }, '<leader>1', "<cmd>CsPrompt g<CR><CR>")
-map({ 'n', 'v' }, '<leader>2', "<cmd>CsPrompt d<CR><CR>")
-map({ 'n', 'v' }, '<leader>3', "<cmd>CsPrompt c<CR><CR>")
-map({ 'n', 'v' }, '<leader>4', "<cmd>CsPrompt t<CR><CR>")
-map({ 'n', 'v' }, '<leader>5', "<cmd>CsPrompt e<CR><CR>")
-map({ 'n', 'v' }, '<leader>6', "<cmd>CsPrompt f<CR><CR>")
-map({ 'n', 'v' }, '<leader>7', "<cmd>CsPrompt i<CR><CR>")
-map({ 'n', 'v' }, '<leader>8', "<cmd>CsPrompt a<CR><CR>")
-map({ 'n', 'v' }, '<leader>9', "<cmd>Cs db build<CR><CR>")
 
 map({"n", "v"}, "<F2>", function()
   local num = vim.wo.number
@@ -261,16 +280,12 @@ map("n", "<leader><leader>9", '<cmd>Telescope diagnostics<CR>', { desc = "Incomi
 
 -- Geri (previous jump)
 map("n", "<C-Left>", "<C-o>", { desc = "Previous jump" })
-
 -- İleri (next jump)
 map("n", "<C-Right>", "<C-i>", { desc = "Next jump" })
-
 -- Yeni yatay split
 map("n", "<leader>sh", "<C-w>s", { desc = "Split horizontal" })
-
 -- Yeni dikey split
 map("n", "<leader>sv", "<C-w>v", { desc = "Split vertical" })
-
 -- Splitler arası geçiş
 map("n", "<leader>h", "<C-w>h", { desc = "Move to left split" })
 map("n", "<leader>j", "<C-w>j", { desc = "Move to bottom split" })
@@ -278,19 +293,15 @@ map("n", "<leader>k", "<C-w>k", { desc = "Move to top split" })
 map("n", "<leader>l", "<C-w>l", { desc = "Move to right split" })
 -- Saat yönünde split değiştir
 map("n", "<leader>w", "<C-w>w", { desc = "Next split clockwise" })
-
 -- Split boyut ayarlama
 map("n", "<leader>+", "<C-w>+", { desc = "Increase split height" })
 map("n", "<leader>-", "<C-w>-", { desc = "Decrease split height" })
 map("n", "<leader><", "<C-w><", { desc = "Decrease split width" })
 map("n", "<leader>>", "<C-w>>", { desc = "Increase split width" })
-
 -- Yeni sekme aç
 map("n", "<leader>tn", ":tabnew<CR>", { desc = "New tab" })
-
 -- Sekmeyi kapat
 map("n", "<leader>tc", ":tabclose<CR>", { desc = "Close tab" })
-
 -- Sekmeler arası geçiş
 map("n", "<Tab>", "gt", { desc = "Next tab" })
 map("n", "<S-Tab>", "gT", { desc = "Previous tab" })
@@ -309,25 +320,24 @@ vim.keymap.set("n", "<C-v>", '"+p', { desc = "Paste clipboard" })
 vim.keymap.set("i", "<C-v>", '<C-r>+', { desc = "Paste clipboard in insert" })
 -- Visual mod: Ctrl+v → clipboard paste (üzerine yapıştır)
 vim.keymap.set("v", "<C-v>", '"+p', { desc = "Paste clipboard visual" })
-
 -- Normal modda satırı clipboard’a kopyala
 vim.keymap.set("n", "<leader>y", '"+yy', { desc = "Yank line to clipboard" })
-
 -- Visual modda seçiliyi clipboard’a kopyala
 vim.keymap.set("v", "<leader>y", '"+y', { desc = "Yank selection to clipboard" })
-
 vim.keymap.set("n", "<leader>g", function()
   vim.cmd([[%s/\s\+$//e]])
   vim.cmd("normal! gg=G")
   print("Trailing whitespace removed and file indented!")
 end, { desc = "Clean whitespace and auto-indent" })
 
--- Visual Mode: Move lines up
-map({"n", "v"}, "<C-S-Up>", ":m .-2<CR>==", { noremap = true, silent = true, desc = "Move line up" })
+-- Visual mode'da Ctrl-Shift-Up: seçilen satırları yukarı taşı
+map("x", "<C-S-Up>", ":move '<-2<CR>gv=gv", { noremap = true, silent = true })
 
--- Visual Mode: Move lines down
+-- Visual mode'da Ctrl-Shift-Down: seçilen satırları aşağı taşı
+map("x", "<C-S-Down>", ":move '>+1<CR>gv=gv", { noremap = true, silent = true })
 
-map({"n", "v"}, "<C-S-Down>", ":m .+1<CR>==", { noremap = true, silent = true, desc = "Move line down" })
+map("n", "<C-S-Up>", ":m .-2<CR>==", { noremap = true, silent = true, desc = "Move line up" })
+map("n", "<C-S-Down>", ":m .+1<CR>==", { noremap = true, silent = true, desc = "Move line down" })
 -- if vim.fn.filereadable(session_path) == 1 then
 --   vim.cmd("source " .. session_path)
 -- end
