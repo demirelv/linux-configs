@@ -1,32 +1,53 @@
 #!/usr/bin/env bash
+# Neovim tabanli C/C++ gelistirme ortami
 
-echo "🚀 Installing C/C++ dev env with Neovim"
+set -euo pipefail
 
-# Paketler
-echo "🔧 Installing system packages..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-sudo apt update
-sudo apt install -y software-properties-common
+echo "Installing C/C++ dev env with Neovim"
 
-# Resmi stable PPA ekle
-sudo add-apt-repository ppa:neovim-ppa/stable
+# Ubuntu 24.04+ deposunda neovim yeterince guncel (>=0.11), PPA gerekmiyor.
+echo "Installing system packages..."
+sudo apt-get update
+sudo apt-get install -y \
+    neovim \
+    clangd \
+    build-essential \
+    ripgrep \
+    fd-find \
+    cscope \
+    universal-ctags \
+    git \
+    curl \
+    unzip
 
-# Güncelle ve kur
-sudo apt update
-sudo apt install -y neovim clangd ripgrep fd-find cscope exuberant-ctags git xclip
+# Clipboard: X11 icin xclip, Wayland icin wl-clipboard (nvim "+ ve tmux copy-mode kullaniyor)
+sudo apt-get install -y xclip wl-clipboard
 
+# Nerd Font (neo-tree / nvim-web-devicons ikonlari icin)
+sudo apt-get install -y fonts-jetbrains-mono || true
 
-if command -v rustc &>/dev/null; then
-  cargo install fd-find
+# fzf: shell entegrasyonu (~/.fzf.bash) icin. .bashrc bu dosyayi source ediyor.
+if [ ! -d "$HOME/.fzf" ]; then
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+else
+    git -C "$HOME/.fzf" pull --ff-only || true
 fi
+"$HOME/.fzf/install" --all --no-update-rc
 
-# Neovim Lazy kur
-echo "📦 Setting up Lazy.nvim..."
+# Neovim config
+echo "Setting up Neovim config..."
 NVIM_CONFIG_DIR="$HOME/.config/nvim"
-mkdir -p "$NVIM_CONFIG_DIR/lua"
+mkdir -p "$NVIM_CONFIG_DIR"
 
-# Lazy manager
-git clone --filter=blob:none https://github.com/folke/lazy.nvim.git \
-  "${NVIM_CONFIG_DIR}/lazy/lazy.nvim"
-cp  init.lua ~/.config/nvim/init.lua
+if [ -e "$NVIM_CONFIG_DIR/init.lua" ] && ! cmp -s "$SCRIPT_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua"; then
+    cp -a "$NVIM_CONFIG_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua.bak.$(date +%Y%m%d-%H%M%S)"
+fi
+cp "$SCRIPT_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua"
 
+# lazy.nvim'i init.lua kendisi bootstrap ediyor (stdpath("data")/lazy/lazy.nvim),
+# burada ayrica klonlamaya gerek yok. Eklentileri simdi kur:
+nvim --headless "+Lazy! sync" +qa || true
+
+echo "Neovim ortami hazir."
