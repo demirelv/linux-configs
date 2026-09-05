@@ -232,8 +232,8 @@ map('n', '<F6>', ':Telescope buffers<CR>', opts)
 -- map('n', '<F6>', ':Telescope help_tags<CR>', opts)
 -- 🧩 Git tracked files
 map('n', '<F7>', ':Telescope git_files<CR>', opts)
--- 🗂️ Dosya tarayıcı (isteğe bağlı)
-map('n', '<F8>', ':Telescope file_browser<CR>', opts)
+-- 🗂️ Dosya tarayıcı benzeri görünüm icin mevcut buffer'in klasorunu listele
+map('n', '<F8>', ':Telescope find_files cwd=%:p:h<CR>', opts)
 -- 🔁 Son komutlar (komut geçmişi)
 map('n', '<F9>', ':Telescope command_history<CR>', opts)
 -- 🧭 LSP Sembolleri
@@ -342,7 +342,7 @@ map("n", "<C-S-Down>", ":m .+1<CR>==", { noremap = true, silent = true, desc = "
 --   vim.cmd("source " .. session_path)
 -- end
 
-vim.api.nvim_create_user_command("Srg", function(opts)
+vim.api.nvim_create_user_command("Rg", function(opts)
   local args = opts.fargs
   local search = args[1] or ""
   local folder = args[2] or vim.fn.getcwd()
@@ -370,6 +370,26 @@ end, {
   desc = "Search in folder or current directory and open quickfix"
 })
 
+map("n", "<leader>9", function()
+  local cwd = vim.fn.getcwd()
+  print("Cscope DB build başladı (" .. cwd .. ")...")
+  vim.fn.jobstart({ "cscope", "-bqkvR" }, {
+    cwd = cwd,
+    on_exit = function(_, code)
+      vim.schedule(function()
+        if code == 0 then
+          -- Tüm eski DB connection'larını temizle, sadece tazeyi ekle
+          pcall(function() require("cscope.db").reset() end)
+          vim.cmd("Cs db add " .. cwd .. "/cscope.out")
+          print("Cscope DB hazır ve eklendi: " .. cwd .. "/cscope.out")
+        else
+          print("Cscope build başarısız! (exit code: " .. code .. ")")
+        end
+      end)
+    end,
+  })
+end, { desc = "Cscope db rebuild (reset + add)" })
+
 map("n", "<C-q>", function()
       local wininfo = vim.fn.getwininfo()
   for _, win in ipairs(wininfo) do
@@ -380,4 +400,3 @@ map("n", "<C-q>", function()
   end
   vim.cmd("copen")
 end, { desc = "Toggle Quickfix", silent = true })
-
