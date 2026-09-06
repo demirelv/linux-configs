@@ -18,6 +18,23 @@
 	ds = diff --staged
 	s = status
 	su = status -uno
+	sa = "!f() { \
+		v=0; if [ \"$1\" = \"-v\" ]; then v=1; shift; fi; \
+		depth=${1:-4}; root=${2:-.}; \
+		R=$(printf '\\033[31m'); G=$(printf '\\033[32m'); Y=$(printf '\\033[33m'); M=$(printf '\\033[35m'); C=$(printf '\\033[36m'); N=$(printf '\\033[0m'); \
+		find \"$root\" -maxdepth \"$depth\" \\( -name node_modules -o -name .venv -o -name vendor -o -name target \\) -prune -o -type d -name .git -print 2>/dev/null | sed 's#/\\.git$##' | sort | while read -r r; do \
+			b=$(git -C \"$r\" rev-parse --abbrev-ref HEAD 2>/dev/null) || continue; \
+			d=$(git -C \"$r\" status --porcelain 2>/dev/null | wc -l); \
+			if [ \"$d\" -gt 0 ]; then sc=$R; st=\"$d degisiklik\"; else sc=$G; st=temiz; fi; \
+			if git -C \"$r\" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then \
+				set -- $(git -C \"$r\" rev-list --left-right --count '@{u}...HEAD' 2>/dev/null); \
+				if [ \"${2:-0}\" -gt 0 ] || [ \"${1:-0}\" -gt 0 ]; then uc=$Y; us=\"push edilmemis $2 / cekilmemis $1\"; else uc=$G; us=guncel; fi; \
+			else uc=$M; us=upstream-yok; fi; \
+			printf '%s%-38s%s %-20s %s%-16s%s %s%s%s\\n' \"$C\" \"${r#./}\" \"$N\" \"$b\" \"$sc\" \"$st\" \"$N\" \"$uc\" \"$us\" \"$N\"; \
+			if [ \"$v\" = 1 ] && [ \"$d\" -gt 0 ]; then git -C \"$r\" status --porcelain | sed 's/^/      /'; fi; \
+			if [ \"$v\" = 1 ]; then git -C \"$r\" log --oneline '@{u}..HEAD' 2>/dev/null | sed 's/^/      unpushed /'; fi; \
+		done; \
+	}; f"
 	st = stash
 	sp = stash pop
 	pr = pull --rebase
