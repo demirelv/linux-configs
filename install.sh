@@ -4,16 +4,18 @@
 #   ./install.sh                    # varsayilan kurulum (nvim + araclar + dotfile'lar)
 #   ./install.sh --with-wireshark   # wireshark'i da kur
 #   ./install.sh --no-dotfiles      # dotfile kopyalamayi atla
+#   ./install.sh --no-claude        # Claude Code ayarlarini kurma
 #   ./install.sh -h                 # yardim
 
 set -euo pipefail
 
 WITH_WIRESHARK=0
 WITH_DOTFILES=1
+WITH_CLAUDE=1
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 usage() {
-    sed -n '2,8p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '2,9p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     exit 0
 }
 
@@ -21,6 +23,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --with-wireshark) WITH_WIRESHARK=1 ;;
         --no-dotfiles)    WITH_DOTFILES=0 ;;
+        --no-claude)      WITH_CLAUDE=0 ;;
         -h|--help)        usage ;;
         *) echo "Bilinmeyen parametre: $1 (yardim icin -h)" >&2; exit 1 ;;
     esac
@@ -76,6 +79,11 @@ if [ "$WITH_DOTFILES" -eq 1 ]; then
         cp "$src" "$dst"
         echo "    kuruldu: $dst"
     done
+fi
+
+if [ "$WITH_CLAUDE" -eq 1 ] && [ -x "$REPO_DIR/claude/install.sh" ]; then
+    echo "==> Claude Code ayarlari kuruluyor"
+    bash "$REPO_DIR/claude/install.sh"
 fi
 
 echo
