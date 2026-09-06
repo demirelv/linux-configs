@@ -165,3 +165,8 @@ tmuxt() {
 	split-window -h -p 30\; \
 	send-keys "sudo ifconfig eth0 192.168.$IPADDR_BYTE.200" C-m
 }
+
+# tmux: varsa session'a baglan, yoksa olustur. Kullanim: tm [isim]  (varsayilan: main)
+tm() {
+    tmux new -A -s "${1:-main}"
+}
