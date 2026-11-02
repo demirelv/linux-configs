@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Commit oncesi gizli bilgi taramasi. Repo public oldugu icin yanlislikla anahtar, token ya da
+# makineye ozel bir deger commit'e girmesin.
+#
+# - Yalniz EKLENEN satirlar taranir (silinen satir ve eski icerik commit'i engellemez).
+# - Bulunan degeri ekrana BASMAZ; yalniz dosya adini ve hangi desenin eslestigini soyler.
+# - Atlamak icin: git commit --no-verify
+# - Makineye ozel desenler repo'ya girmesin diye ayri bir dosyada tutulur (her satir bir `grep -E` deseni,
+#   # ile baslayan satirlar ve bos satirlar yok sayilir):
+#     ${LC_DENY_FILE:-~/.config/linux-configs/deny-patterns}
+#   Ornek: kendi kayit defteri adresin, ozel dizin adin, sirket alan adin.
+set -Eeuo pipefail
+
+deny_file="${LC_DENY_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/linux-configs/deny-patterns}"
+
+# Genel desenler (anahtar/token bicimleri). Metin parcalari bu dosyanin kendisine uymaz.
+patterns=(
+    '-----BEGIN [A-Z ]*PRIVATE KEY-----'
+    'AKIA[0-9A-Z]{16}'
+    'gh[pousr]_[A-Za-z0-9]{36,}'
+    'glpat-[A-Za-z0-9_-]{20,}'
+    'xox[baprs]-[A-Za-z0-9-]{10,}'
+    '(api[_-]?key|secret|token|passw(or)?d)[A-Za-z0-9_]*[[:space:]]*[=:][[:space:]]*["'"'"'][A-Za-z0-9/+_=-]{16,}["'"'"']'
+)
+labels=("ozel anahtar basligi" "AWS erisim anahtari" "GitHub token" "GitLab token" "Slack token" "atanmis sir degeri")
+
+if [ -f "$deny_file" ]; then
+    n=0
+    while IFS= read -r line || [ -n "$line" ]; do
+        n=$((n + 1))
+        case "$line" in ''|'#'*) continue ;; esac
+        patterns+=("$line")
+        labels+=("yerel desen (satir $n)")
+    done < "$deny_file"
+fi
+
+hits=0
+while IFS= read -r -d '' file; do
+    added="$(git diff --cached -U0 --no-color -- "$file" | grep -E '^\+' | grep -vE '^\+\+\+ ' || true)"
+    [ -n "$added" ] || continue
+    for i in "${!patterns[@]}"; do
+        if grep -qE -e "${patterns[$i]}" <<<"$added"; then
+            echo "pre-commit: $file -> ${labels[$i]}" >&2
+            hits=$((hits + 1))
+        fi
+    done
+done < <(git diff --cached --name-only --diff-filter=ACM -z)
+
+if [ "$hits" -gt 0 ]; then
+    echo "pre-commit: $hits eslesme. Gercekten gerekiyorsa: git commit --no-verify" >&2
+    exit 1
+fi

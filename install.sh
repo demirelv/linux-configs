@@ -68,6 +68,13 @@ fi
 echo "==> neovim ortami kuruluyor"
 ( cd "$REPO_DIR/nvim" && bash ./install.sh )
 
+# Gizli bilgi kancasi (repo public): commit oncesi eklenen satirlari tarar. Makineye ozel desenler
+# ~/.config/linux-configs/deny-patterns dosyasina yazilir (repo'ya girmez; ayrintisi .githooks/pre-commit basinda).
+if [ -d "$REPO_DIR/.git" ]; then
+    git -C "$REPO_DIR" config core.hooksPath .githooks
+    echo "==> pre-commit kancasi etkin (core.hooksPath=.githooks)"
+fi
+
 if [ "$WITH_DOTFILES" -eq 1 ]; then
     echo "==> dotfile'lar kuruluyor"
     # Sembolik bag: repo'daki dosyayi duzenlemek $HOME'u da gunceller, ayrisma olmaz.

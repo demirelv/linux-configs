@@ -18,7 +18,7 @@ fail() { failed=$((failed + 1)); failed_steps+=("$1"); }
 
 step "sozdizimi (bash -n)"
 # -co: henuz commit edilmemis yeni dosyalar da taransin
-mapfile -t files < <(git ls-files -co --exclude-standard -- '*.sh' bash/.bashrc)
+mapfile -t files < <(git ls-files -co --exclude-standard -- '*.sh' bash/.bashrc .githooks/pre-commit)
 for f in "${files[@]}"; do
     if bash -n "$f"; then echo "ok   $f"; else echo "HATA $f"; fail "bash -n $f"; fi
 done
@@ -36,6 +36,7 @@ fi
 
 step "kabuk testleri"
 bash tests/shell_test.sh || fail "kabuk testleri"
+bash tests/hook_test.sh || fail "pre-commit kanca testi"
 
 if [ "$FAST" -eq 0 ]; then
     step "tmux eklenti testi"
