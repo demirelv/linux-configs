@@ -30,7 +30,7 @@ local function all_maps(mode)
   return out
 end
 
-for _, mode in ipairs({ "n", "x" }) do
+for _, mode in ipairs({ "n", "x", "i" }) do
   local maps = all_maps(mode)
   local conflicts = {}
   for _, a in ipairs(maps) do
@@ -69,6 +69,22 @@ check(vim.g.colors_name == "tokyonight-night", "renk temasi tokyonight-night (" 
 local cfg = vim.lsp.config["clangd"]
 check(cfg ~= nil and cfg.cmd ~= nil and cfg.cmd[1] == "clangd", "vim.lsp.config.clangd komutu clangd")
 check(vim.lsp.is_enabled == nil or vim.lsp.is_enabled("clangd"), "clangd etkin")
+check(vim.tbl_contains(cfg.cmd, "--background-index"), "clangd --background-index ile calisir")
+check(#vim.api.nvim_get_autocmds({ event = "LspAttach" }) > 0, "LspAttach (yerlesik tamamlama) autocmd'i var")
+check(vim.tbl_contains(vim.opt.completeopt:get(), "popup"), "completeopt popup iceriyor")
+
+-- clangd varsa gercek bir C dosyasi ac: client baglanmali ve tamamlama etkin olmali
+if vim.fn.executable("clangd") == 1 then
+  local dir = vim.fn.tempname()
+  vim.fn.mkdir(dir, "p")
+  vim.fn.writefile({ "int main(void) { return 0; }" }, dir .. "/main.c")
+  vim.cmd("edit " .. dir .. "/main.c")
+  local attached = vim.wait(15000, function() return #vim.lsp.get_clients({ bufnr = 0, name = "clangd" }) > 0 end, 200)
+  check(attached, "clangd C dosyasina baglandi")
+  vim.cmd("bwipeout!")
+else
+  io.stdout:write("SKIP clangd baglanti testi (clangd yok)\n")
+end
 
 -- 5. Vurgular: uc kalip bir kez eklenmis
 -- (-c komutlari VimEnter'dan once calisir; autocmd'i elle tetikle, iki kez tetiklemek de tekrar eklememeli)

@@ -18,6 +18,7 @@ opt.termguicolors = true
 opt.ignorecase = true -- "/" aramasi buyuk/kucuk harf duyarsiz...
 opt.smartcase = true  -- ...ama buyuk harf yazarsan duyarli
 opt.updatetime = 300  -- gitsigns blame / LSP hover icin daha akici
+opt.completeopt = { "menu", "menuone", "noselect", "popup" } -- yerlesik tamamlama: liste + dokuman popup
 vim.o.grepprg = "rg --vimgrep --smart-case"
 vim.cmd("syntax on")
 
@@ -118,6 +119,8 @@ require("lazy").setup({
 
   -- LSP: nvim-lspconfig sadece lsp/*.lua varsayilanlarini saglar
   { "neovim/nvim-lspconfig", config = function()
+    -- C/C++ projelerinde clangd icin compile_commands.json gerekir (ornek: bear -- make).
+    vim.lsp.config("clangd", { cmd = { "clangd", "--background-index" } })
     vim.lsp.enable("clangd")
   end },
 
@@ -206,6 +209,17 @@ require("lazy").setup({
   },
 }, { performance = { rtp = { paths = extra_rtp } } })
 
+-- LSP tamamlama: eklentisiz, Neovim'in yerlesik ozelligi. Yazdikca liste acilir;
+-- <C-n>/<C-p> gez, <C-y> kabul et, <C-e> kapat, <C-Space> elle tetikle.
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(ev)
+    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+    if client and client:supports_method("textDocument/completion", ev.buf) then
+      vim.lsp.completion.enable(true, client.id, ev.buf, { autotrigger = true })
+    end
+  end,
+})
+
 -- === Kisayollar ===
 -- Her kisayolun desc'i var: <F1> veya <leader>fk ile aranabilir, which-key'de gorunur.
 -- Bir kisayol baska bir kisayolun on eki olmamali (tests/check.lua bunu dener).
@@ -228,6 +242,8 @@ map("n", "<leader>fo", tb("oldfiles"), { desc = "Son dosyalar" })
 map("n", "<leader>fr", tb("resume"), { desc = "Son aramaya don" })
 map("n", "<leader>fh", tb("help_tags"), { desc = "Yardim ara" })
 map("n", "<leader>fd", tb("diagnostics"), { desc = "Diagnostics" })
+
+map("i", "<C-Space>", function() vim.lsp.completion.get() end, { desc = "Tamamlamayi elle ac" })
 
 -- Git sinyalleri
 map("n", "]h", function() require("gitsigns").next_hunk() end, { desc = "Sonraki git hunk" })
