@@ -36,6 +36,23 @@ else
 fi
 "$HOME/.fzf/install" --all --no-update-rc
 
+# init.lua Neovim >= 0.11 ister (vim.lsp.enable). Daha eskiyse uyar; kurulum yine de devam eder.
+if ! nvim --headless '+lua os.exit(vim.fn.has("nvim-0.11") == 1 and 0 or 1)' >/dev/null 2>&1; then
+    echo "UYARI: kurulu Neovim 0.11'den eski; init.lua uyari verip yuklenmeyecek."
+    echo "       Guncel surum icin: snap install nvim --classic veya resmi release arsivi."
+fi
+
+# tree-sitter CLI: nvim-treesitter (main dali) parser derlemek icin ister.
+# Resmi paket (tree-sitter organizasyonu); kurulum betigi ikiliyi github.com/tree-sitter/tree-sitter
+# release'inden indirir. Kurulmazsa nvim yine calisir, sadece treesitter vurgusu olmaz.
+if ! command -v tree-sitter >/dev/null 2>&1; then
+    if command -v npm >/dev/null 2>&1; then
+        npm install -g tree-sitter-cli || echo "UYARI: tree-sitter-cli kurulamadi (npm -g izni?)."
+    else
+        echo "UYARI: npm yok, tree-sitter-cli kurulmadi (nvm kur ya da: cargo install --locked tree-sitter-cli)."
+    fi
+fi
+
 # Neovim config
 echo "Setting up Neovim config..."
 NVIM_CONFIG_DIR="$HOME/.config/nvim"

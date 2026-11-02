@@ -1,0 +1,3 @@
+.codex
+*.bak.*
+nvim/lazy-lock.json
