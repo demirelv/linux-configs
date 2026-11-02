@@ -32,8 +32,9 @@ surum yukseltmek icin commit'i bilincli degistir. Eklentiler yoksa `.tmux.conf` 
 | `Prefix` + `Ctrl-s` | Oturumlari simdi kaydet |
 | `Prefix` + `Ctrl-r` | Son kaydi geri yukle |
 
-`continuum` periyodik kaydeder ve tmux sunucusu acilirken son kaydi geri yukler. Otomatik kaydi yalnizca
-makinede baska tmux sureci yokken baslatir; ilk acilista kaydin olusmasi bu yuzden gecikebilir.
+`continuum` periyodik kaydeder ve tmux sunucusu acilirken son kaydi geri yukler. Otomatik kaydi yalnizca ayni
+kullanicinin baska bir tmux sunucusu yokken baslatir (komutu `tmux` ile baslayan baska sunucu/istemci sureclerini
+sayar; ikinci bir `tmux -L ...` sunucusu da buna girer). Kayit gecikirse `Prefix` + `Ctrl-s` ile elle al.
 
 ## nvim-tmux gezinti
 

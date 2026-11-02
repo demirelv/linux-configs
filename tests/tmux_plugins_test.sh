@@ -50,9 +50,10 @@ keys="$(tmux list-keys 2>&1)"
 ok "resurrect: Prefix + Ctrl-s kaydet kisayolu bagli" grep -q 'resurrect.*save.sh' <<<"$keys"
 ok "resurrect: Prefix + Ctrl-r geri yukle kisayolu bagli" grep -q 'resurrect.*restore.sh' <<<"$keys"
 ok "continuum-restore on" test "$(tmux show -gv @continuum-restore)" = "on"
-# NOT: continuum otomatik kaydi (status-right kancasi) yalniz makinede baska tmux sureci yokken baslatir ve
-# "baska surec"i komut satirinda "tmux" gecen her seyle sayar (bu test betigi dahil). Bu yuzden kanca burada
-# guvenilir olculemez; kaydetme yolu asagida resurrect ile dogrudan test edilir.
+# NOT: continuum otomatik kaydi (status-right kancasi) yalniz AYNI KULLANICININ baska tmux sureci yokken
+# baslatir: komutu "tmux" ile baslayan her surec sayilir (baska sunucu ve istemciler; "tmux: server" gibi, bu
+# yuzden `pgrep -x tmux` onlari gormez). Gercek tmux oturumun aciksa kanca burada olculemez; kaydetme yolu
+# asagida resurrect ile dogrudan test edilir. Ayrinti: know-how "tmux-resurrect-continuum-navigator-traps".
 ok "prefix hala C-a" test "$(tmux show -gv prefix)" = "C-a"
 ok "escape-time 10 ms (nvim'de Esc gecikmesi yok)" test "$(tmux show -sv escape-time)" = "10"
 
