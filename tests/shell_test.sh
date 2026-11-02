@@ -7,7 +7,7 @@ REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"
 cleanup() {
     TMUX_TMPDIR="$tmp/tmux" tmux kill-server 2>/dev/null || true
-    rm -rf -- "${tmp:?}"
+    rm -rf -- "${tmp:?}" 2>/dev/null || true
 }
 trap cleanup EXIT
 

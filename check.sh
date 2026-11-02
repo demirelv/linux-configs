@@ -12,13 +12,15 @@ FAST=0
 [ "${1:-}" = "--fast" ] && FAST=1
 
 failed=0
+failed_steps=()
 step() { echo; echo "==> $*"; }
+fail() { failed=$((failed + 1)); failed_steps+=("$1"); }
 
 step "sozdizimi (bash -n)"
 # -co: henuz commit edilmemis yeni dosyalar da taransin
 mapfile -t files < <(git ls-files -co --exclude-standard -- '*.sh' bash/.bashrc)
 for f in "${files[@]}"; do
-    if bash -n "$f"; then echo "ok   $f"; else echo "HATA $f"; failed=$((failed + 1)); fi
+    if bash -n "$f"; then echo "ok   $f"; else echo "HATA $f"; fail "bash -n $f"; fi
 done
 
 step "shellcheck"
@@ -26,23 +28,23 @@ SC="${SHELLCHECK:-$(command -v shellcheck || true)}"
 if [ -n "$SC" ]; then
     # .bashrc dosyasi Ubuntu iskeletinden geliyor: yalniz bizim eklediklerimizi degil tumunu tarar
     for f in "${files[@]}"; do
-        if "$SC" -x -s bash -S warning "$f"; then echo "ok   $f"; else failed=$((failed + 1)); fi
+        if "$SC" -x -s bash -S warning "$f"; then echo "ok   $f"; else fail "shellcheck $f"; fi
     done
 else
     echo "UYARI: shellcheck kurulu degil (sudo apt install shellcheck); bu adim atlandi."
 fi
 
 step "kabuk testleri"
-bash tests/shell_test.sh || failed=$((failed + 1))
+bash tests/shell_test.sh || fail "kabuk testleri"
 
 if [ "$FAST" -eq 0 ]; then
     step "tmux eklenti testi"
-    bash tests/tmux_plugins_test.sh || failed=$((failed + 1))
+    bash tests/tmux_plugins_test.sh || fail "tmux eklenti testi"
     step "nvim testleri"
-    bash nvim/tests/run.sh || failed=$((failed + 1))
+    bash nvim/tests/run.sh || fail "nvim testleri"
 else
     echo; echo "(--fast: nvim testi atlandi)"
 fi
 
 echo
-if [ "$failed" -eq 0 ]; then echo "TUM KONTROLLER GECTI"; else echo "$failed ADIM BASARISIZ"; exit 1; fi
+if [ "$failed" -eq 0 ]; then echo "TUM KONTROLLER GECTI"; else echo "$failed ADIM BASARISIZ: ${failed_steps[*]}"; exit 1; fi
