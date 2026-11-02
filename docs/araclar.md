@@ -68,7 +68,7 @@ Arac kuruluysa `.bashrc` (ya da Git) onu kendiliginden kullanir, kurulu degilse 
 | `bat` | `Ctrl-T` dosya secerken renkli onizleme |
 | `eza` | `lt` takma adi (2 seviye agac) |
 | `mise` | `mise activate bash`: dil surumleri (node, python) klasore gore degisir |
-| `atuin` | `Ctrl-r` gecmis aramasini devralir (dizin, cikis kodu, sure) |
+| `atuin` | `Ctrl-r` ve yukari ok gecmis aramasini devralir (dizin, cikis kodu, sure). Veritabani bos baslar: `install-tools.sh extra` bash gecmisini bir kez iceri alir (`atuin import auto`) ve yukari oku tum gecmise acar (`filter_mode_shell_up_key_binding = "global"`, varsayilan yalniz bu oturum). Kendi ayarini yazdiysan ezilmez |
 | `starship` | Prompt'u degistirir (git dali, venv, cikis kodu, komut suresi) |
 | `~/.cargo/bin` | Varsa `PATH`'e eklenir (`cargo install` ile kurulanlar bulunur) |
 | `git-delta` | `~/.gitconfig.delta` kopyalanir ve `~/.gitconfig` icinden include edilir (pager, `zdiff3` cakisma stili, tasinan satir rengi) |

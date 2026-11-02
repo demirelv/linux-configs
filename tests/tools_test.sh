@@ -33,12 +33,14 @@ cat > "$bin/apt-get" <<'EOS'
 printf '%s\n' "$*" >> "$STUB_LOG"
 EOS
 chmod +x "$bin"/*
-# Gercek araclar PATH'te kalsin ama sahteler once gelsin; sistemde gercek fd/bat/delta olsa testi bozmasin diye
-# onlari gizleyen bos bir dizin yerine PATH'i kontrollu kuruyoruz.
-export PATH="$bin:/usr/bin:/bin"
-for t in fd fdfind bat batcat delta; do
-    if command -v "$t" >/dev/null 2>&1; then echo "SKIP $t sistemde kurulu; sahte-PATH testi guvenilmez olabilir"; fi
+# PATH kontrollu: sistemin /usr/bin'i, ama fd/fdfind/bat/batcat/delta gorunmeden (kurulu olsalar testi bozar).
+sysbin="$tmp/sysbin"; mkdir -p "$sysbin"
+for f in /usr/bin/* /bin/*; do
+    n="${f##*/}"
+    case "$n" in fd|fdfind|bat|batcat|delta) continue ;; esac
+    [ -e "$sysbin/$n" ] || ln -s "$f" "$sysbin/$n" 2>/dev/null || true
 done
+export PATH="$bin:$sysbin"
 
 run() { bash "$REPO/tools/install-tools.sh" "$@" 2>&1; }
 
@@ -103,6 +105,22 @@ ok "extra: basarisiz arac raporlanir" has "$out" "kurulamayan extra araclar: tok
 ok "extra: dry-run cargo cagirmaz" test "$(: > "$STUB_LOG"; run --dry-run extra >/dev/null; wc -c < "$STUB_LOG")" -eq 0
 ok "all extra'yi de icerir" has "$(run --dry-run all)" "cargo/pipx"
 ok "extra yokken varsayilan cargo/pipx satiri yok" not has "$(run --dry-run)" "cargo/pipx"
+
+# atuin ilk kurulum: bash gecmisi bir kez iceri alinir, yukari ok tum gecmisi arar (idempotent)
+printf '#!/bin/sh\nprintf "atuin %%s\\n" "$*" >> "$STUB_LOG"\n' > "$bin/atuin"; chmod +x "$bin/atuin"
+atuin_cfg="$HOME/.config/atuin/config.toml"; atuin_mark="$HOME/.local/share/atuin/.linux-configs-imported"
+: > "$STUB_LOG"; run extra >/dev/null 2>&1 || true
+ok "atuin: bash gecmisi iceri alinir" has "$(cat "$STUB_LOG")" "atuin import auto"
+ok "atuin: yukari ok ayari yazilir" grep -qx 'filter_mode_shell_up_key_binding = "global"' "$atuin_cfg"
+ok "atuin: import isareti konur" test -f "$atuin_mark"
+: > "$STUB_LOG"; run extra >/dev/null 2>&1 || true
+ok "atuin: ikinci calistirmada tekrar import yok" not has "$(cat "$STUB_LOG")" "atuin import"
+ok "atuin: ayar tekrar eklenmez" test "$(grep -c filter_mode_shell_up_key_binding "$atuin_cfg")" -eq 1
+rm -f "$atuin_mark"; printf 'filter_mode_shell_up_key_binding = "session"\n[sync]\n' > "$atuin_cfg"
+run extra >/dev/null 2>&1 || true
+ok "atuin: kullanicinin kendi ayari ezilmez" grep -qx 'filter_mode_shell_up_key_binding = "session"' "$atuin_cfg"
+ok "atuin: ayar [tablo]'dan once (ust duzey) yazilir" test "$(head -n1 "$(dirname "$atuin_cfg")/config.toml")" != "[sync]"
+rm -f "$bin/atuin"
 
 echo
 if [ "$failed" -eq 0 ]; then echo "TUMU GECTI"; else echo "$failed KONTROL BASARISIZ"; exit 1; fi

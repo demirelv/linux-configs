@@ -116,6 +116,30 @@ if [ "$want_extra" -eq 1 ]; then
     if [ ${#extra_failed[@]} -gt 0 ]; then echo "UYARI: kurulamayan extra araclar: ${extra_failed[*]}" >&2; fi
 fi
 
+# --- atuin ilk kurulum: veritabani bos baslar, bu yuzden Ctrl-r / yukari ok hic komut gostermez ---
+# Bash gecmisini bir kez iceri alir (isaret dosyasi tekrarini onler) ve yukari oku tum gecmise acar
+# (varsayilan: yalniz bu oturum). Kullanicinin kendi filter_mode_shell_up_key_binding ayarina dokunmaz.
+atuin_bin="$(command -v atuin 2>/dev/null || true)"; [ -n "$atuin_bin" ] || { [ -x "$HOME/.cargo/bin/atuin" ] && atuin_bin="$HOME/.cargo/bin/atuin"; }
+if [ "$want_extra" -eq 1 ] && [ -n "$atuin_bin" ]; then
+    atuin_cfg="${XDG_CONFIG_HOME:-$HOME/.config}/atuin/config.toml"
+    atuin_mark="${XDG_DATA_HOME:-$HOME/.local/share}/atuin/.linux-configs-imported"
+    if [ ! -f "$atuin_mark" ]; then
+        if "$atuin_bin" import auto; then
+            mkdir -p "$(dirname "$atuin_mark")" && : > "$atuin_mark"
+            echo "    atuin: bash gecmisi iceri alindi"
+        else
+            echo "    UYARI: atuin import auto basarisiz; elle calistir: atuin import auto" >&2
+        fi
+    fi
+    if ! grep -qE '^[[:space:]]*filter_mode_shell_up_key_binding' "$atuin_cfg" 2>/dev/null; then
+        mkdir -p "$(dirname "$atuin_cfg")"
+        # ust duzey anahtar [tablo] basliklarindan ONCE olmali: dosyanin basina yazilir
+        { echo 'filter_mode_shell_up_key_binding = "global"'; [ ! -f "$atuin_cfg" ] || cat "$atuin_cfg"; } > "$atuin_cfg.new" \
+            && mv "$atuin_cfg.new" "$atuin_cfg"
+        echo "    atuin: yukari ok tum gecmisi arar (config.toml)"
+    fi
+fi
+
 # --- kurulum sonrasi: adlar ve Git entegrasyonu (idempotent) ---
 mkdir -p "$HOME/.local/bin"
 if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1 && [ ! -e "$HOME/.local/bin/fd" ]; then
