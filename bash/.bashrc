@@ -20,6 +20,19 @@ shopt -s histappend
 HISTSIZE=
 HISTFILESIZE=
 HISTTIMEFORMAT="%d/%m/%y %T  "
+# Her komuttan sonra gecmisi dosyaya ekle: tmux pane'leri arasinda Ctrl-r gecmisi paylasilir.
+# (.bashrc iki kez okunursa tekrar eklenmez.)
+case "${PROMPT_COMMAND:-}" in
+    *"history -a"*) ;;
+    *) PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}" ;;
+esac
+
+# Varsayilan editor: nvim varsa o (git commit, crontab -e, vimt/vimj ...). Baska bir editor bilerek
+# ayarlanmissa (bos / vi / vim disinda bir deger) ezilmez.
+if command -v nvim >/dev/null 2>&1; then
+    case "${EDITOR:-}" in ''|vi|vim) export EDITOR=nvim ;; esac
+    case "${VISUAL:-}" in ''|vi|vim) export VISUAL=nvim ;; esac
+fi
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
@@ -138,7 +151,7 @@ vimt() {
 	return 1
     fi
     mkdir -p ~/Documents/FixedIssues/"$1"
-    vim ~/Documents/FixedIssues/"$1"/notes.md
+    "${EDITOR:-vim}" ~/Documents/FixedIssues/"$1"/notes.md
 }
 
 # vim-jira
@@ -148,36 +161,70 @@ vimj() {
 	return 1
     fi
     mkdir -p ~/Documents/FixedIssues/"$1"
-    vim ~/Documents/FixedIssues/"$1"/notes.jira
+    "${EDITOR:-vim}" ~/Documents/FixedIssues/"$1"/notes.jira
 }
 
-# tmux-ticket
+# --- tmux-ticket: bilet icin tek komutla calisma ortami ---
+# Ayarlar (makineye gore ~/.bashrc.local'da degistirilir):
+#   TMUXT_SERIAL  seri port (varsayilan: /dev/serial/by-id altindaki ilk aygit, yoksa /dev/ttyUSB0)
+#   TMUXT_ETH     ag arayuzu (varsayilan: eth0)
+# /dev/serial/by-id adi aygit yeniden baslayinca ttyUSB0 -> ttyUSB1 kaysa da degismez.
+_tmuxt_serial() {
+    if [ -n "${TMUXT_SERIAL:-}" ]; then printf '%s\n' "$TMUXT_SERIAL"; return; fi
+    local first
+    first="$(find "${TMUXT_SERIAL_DIR:-/dev/serial/by-id}" -mindepth 1 -maxdepth 1 2>/dev/null | sort | head -n1)"
+    printf '%s\n' "${first:-/dev/ttyUSB0}"
+}
+# tio kuruluysa (cihaz yeniden baslayinca otomatik yeniden baglanir) onu, yoksa minicom'u kullan
+_tmuxt_console() {
+    if command -v tio >/dev/null 2>&1; then echo "sudo tio $1"; else echo "sudo minicom -w -D $1 -c on"; fi
+}
 tmuxt() {
     if [ $# -ne 1 ]; then
-	echo "Usage: ${FUNCNAME[0]} <ticket-name>"
-	return 1
+        echo "Usage: ${FUNCNAME[0]} <ticket-name>"
+        return 1
     fi
-    CUR_TICKET="$1"
-    IPADDR_BYTE=$(if [[ "$(echo "${CUR_TICKET}" | awk '{print substr ($0, 1, 3)}')" == "RTS" ]]; \
-	then echo "111"; else echo "2"; fi)
-    tmux a -t "$1" || tmux new -s "$1" \; \
-	send-keys 'sudo minicom -w -D /dev/ttyUSB0 -c on' C-m \; \
-	split-window -v -p 40 \; \
-	send-keys "vimt $CUR_TICKET" C-m \; \
-	split-window -h -p 30\; \
-	send-keys "sudo ifconfig eth0 192.168.$IPADDR_BYTE.200" C-m
+    local ticket="$1" ip_byte=2 eth="${TMUXT_ETH:-eth0}" port
+    [ "${ticket:0:3}" = "RTS" ] && ip_byte=111
+    port="$(_tmuxt_serial)"
+    tmux a -t "$ticket" || tmux new -s "$ticket" \; \
+        send-keys "$(_tmuxt_console "$port")" C-m \; \
+        split-window -v -p 40 \; \
+        send-keys "vimt $ticket" C-m \; \
+        split-window -h -p 30 \; \
+        send-keys "sudo ifconfig $eth 192.168.$ip_byte.200" C-m
 }
 
-# tmux: varsa session'a baglan, yoksa olustur. Kullanim: tm [isim]  (varsayilan: main)
-# tmux icindeyse ic ice acmaz, switch-client ile gecer.
-tm() {
-    local name="${1:-main}"
+# tmux: session'a baglan ya da olustur. tmux icindeyse ic ice acmaz, switch-client ile gecer.
+# _tm_open <isim> [dizin]: yeni session ise dizinde baslar.
+_tm_open() {
+    local name="$1" dir="${2:-}" args=()
+    [ -n "$dir" ] && args=(-c "$dir")
     if [ -n "$TMUX" ]; then
-        tmux has-session -t "$name" 2>/dev/null || tmux new -d -s "$name"
-        tmux switch-client -t "$name"
+        tmux has-session -t "=$name" 2>/dev/null || tmux new -d -s "$name" "${args[@]}"
+        tmux switch-client -t "=$name"
     else
-        tmux new -A -s "$name"
+        tmux new -A -s "$name" "${args[@]}"
     fi
+}
+# Kullanim: tm [isim]  (varsayilan: main)
+tm() { _tm_open "${1:-main}"; }
+
+# tp [filtre]: TP_ROOT (varsayilan $HOME) altindaki klasorlerden birini sectir, o isimle tmux session'i ac.
+# Session adi klasor adidir ("." ve ":" tmux'ta yasak oldugu icin "_" olur). Tek eslesme varsa sormadan acar.
+tp() {
+    local root="${TP_ROOT:-$HOME}" list pick
+    [ -d "$root" ] || { echo "tp: $root yok (TP_ROOT ayarla)" >&2; return 1; }
+    list="$(find "$root" -mindepth 1 -maxdepth 1 -type d -not -name '.*' -printf '%f\n' | sort)"
+    [ -n "$list" ] || { echo "tp: $root icinde klasor yok" >&2; return 1; }
+    if command -v fzf >/dev/null 2>&1; then
+        pick="$(printf '%s\n' "$list" | fzf --prompt='proje> ' --height=40% --reverse --query="${1:-}" --select-1)" || return 0
+    else
+        # shellcheck disable=SC2086  # klasor adlarinda bosluk yok varsayimi (select icin kelime listesi)
+        select pick in $list; do break; done
+    fi
+    [ -n "$pick" ] || return 0
+    _tm_open "${pick//[.:]/_}" "$root/$pick"
 }
 
 # tmux: baska session'daki pencereyi tasi. Kullanim: tmw kaynak [hedef]
@@ -209,6 +256,13 @@ tmj() {
     fi
     tmux join-pane -s "$src" -t "${2:-$cur}"
 }
+
+# --- cdt / vimt / vimj / tmuxt icin bilet klasoru tamamlamasi ---
+_ticket_complete() {
+    [ "$COMP_CWORD" -eq 1 ] || return 0
+    mapfile -t COMPREPLY < <(compgen -W "$(find "$HOME/Documents/FixedIssues" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' 2>/dev/null)" -- "${COMP_WORDS[COMP_CWORD]}")
+}
+complete -F _ticket_complete cdt vimt vimj tmuxt
 
 # --- tm / tmw / tmj icin Tab tamamlamasi ---
 # "main:2" icindeki ":" COMP_WORDBREAKS'te oldugu icin bash gercek terminalde onu uc kelimeye boler

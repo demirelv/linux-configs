@@ -100,5 +100,76 @@ else
     echo "SKIP bash-completion yuklu degil"
 fi
 
+# ---- gunluk kullanim yardimcilari: EDITOR, gecmis, bilet tamamlamasi, tp, tmuxt ----
+okc() { local msg="$1"; shift; if "$@"; then echo "PASS $msg"; else echo "FAIL $msg"; failed=$((failed + 1)); fi; }
+has() { grep -qF -- "$2" <<<"$1"; }
+unset TMUX
+fh2="$tmp/fh2"; mkdir -p "$fh2" "$tmp/bin" "$tmp/proj/alpha.proj" "$tmp/proj/beta"
+ln -s "$REPO/bash/.bashrc" "$fh2/.bashrc"
+rcrun() { HOME="$fh2" PATH="$tmp/bin:$PATH" bash -ic "$1" 2>/dev/null; } # gercek interaktif .bashrc ile
+
+# git editoru
+okc "git: core.editor nvim" test "$(git config --file "$REPO/git/.gitconfig" core.editor)" = "nvim"
+
+# EDITOR: nvim varsa nvim olur; bilerek ayarlanmis baska editor ezilmez
+if command -v nvim >/dev/null 2>&1; then
+    okc "EDITOR bossa nvim olur" test "$(env -u EDITOR -u VISUAL HOME="$fh2" bash -ic 'echo "E=$EDITOR V=$VISUAL"' 2>/dev/null | grep -o 'E=.*')" = "E=nvim V=nvim"
+    okc "EDITOR=vim ise nvim olur" test "$(EDITOR=vim VISUAL=vi HOME="$fh2" bash -ic 'echo "E=$EDITOR V=$VISUAL"' 2>/dev/null | grep -o 'E=.*')" = "E=nvim V=nvim"
+    okc "bilerek ayarlanmis editor ezilmez" test "$(EDITOR=emacs VISUAL=emacs HOME="$fh2" bash -ic 'echo "E=$EDITOR"' 2>/dev/null | grep -o 'E=.*')" = "E=emacs"
+else
+    echo "SKIP EDITOR testleri (nvim kurulu degil)"
+fi
+
+# gecmis: PROMPT_COMMAND'da tek kez, .bashrc iki kez okunsa da
+pc="$(rcrun 'source ~/.bashrc; source ~/.bashrc; echo "PC=$PROMPT_COMMAND"' | grep -o 'PC=.*')"
+okc "gecmis: 'history -a' PROMPT_COMMAND'da tam bir kez" test "$(grep -o 'history -a' <<<"$pc" | wc -l)" -eq 1
+
+# vimt / vimj $EDITOR kullanir
+cat > "$tmp/bin/fakeeditor" <<EOS
+#!/usr/bin/env bash
+printf '%s\n' "\$*" > "$tmp/editor.args"
+EOS
+chmod +x "$tmp/bin/fakeeditor"
+EDITOR="$tmp/bin/fakeeditor" HOME="$fh2" bash -ic 'vimt RTS-9; vimj RTS-9' >/dev/null 2>&1 || true
+okc "vimj de \$EDITOR ile acar (notes.jira)" grep -q 'FixedIssues/RTS-9/notes.jira' "$tmp/editor.args"
+okc "vimt klasoru olusturur" test -d "$fh2/Documents/FixedIssues/RTS-9"
+
+# bilet klasoru tamamlamasi
+mkdir -p "$fh2/Documents/FixedIssues/RTS-1" "$fh2/Documents/FixedIssues/RTS-22" "$fh2/Documents/FixedIssues/ABC-3"
+sed -n '/^_ticket_complete() {/,/^}/p' "$REPO/bash/.bashrc" > "$tmp/tc.bash"
+tcomp() { HOME="$fh2" bash -c 'source "$1"; COMP_CWORD="$2"; shift 2; COMP_WORDS=("$@"); COMPREPLY=(); _ticket_complete; echo "${COMPREPLY[*]}"' _ "$tmp/tc.bash" "$@"; }
+okc "bilet tamamlama: cdt RTS<Tab> -> RTS-1 RTS-22 (sirali)" test "$(tcomp 1 cdt RTS | tr ' ' '\n' | sort | tr '\n' ' ')" = "RTS-1 RTS-22 RTS-9 "
+okc "bilet tamamlama: ikinci arguman icin oneri yok" test -z "$(tcomp 2 cdt RTS-1 x)"
+
+# tp ve tm: tmux'u kayit eden bir taklitle (gercek oturum acmadan) dogru komutlari uretiyor mu
+printf '#!/usr/bin/env bash\nprintf "%%s\\n" "${FZF_PICK:-}"\n[ -n "${FZF_PICK:-}" ]\n' > "$tmp/bin/fzf"; chmod +x "$tmp/bin/fzf"
+stub='tmux() { printf "%s\n" "$*" >> "$LOG"; return 1; }'
+LOG="$tmp/tp.log"; export LOG
+: > "$LOG"; FZF_PICK=beta TP_ROOT="$tmp/proj" rcrun "$stub; tp" >/dev/null || true
+okc "tp (tmux disinda): klasorde yeni session baslatir" grep -qxF "new -A -s beta -c $tmp/proj/beta" "$LOG"
+: > "$LOG"; TMUX=x FZF_PICK=beta TP_ROOT="$tmp/proj" rcrun "$stub; tp" >/dev/null || true
+okc "tp (tmux icinde): olusturur ve gecer" bash -c 'grep -qxF "new -d -s beta -c '"$tmp"'/proj/beta" "$1" && grep -qxF "switch-client -t =beta" "$1"' _ "$LOG"
+: > "$LOG"; FZF_PICK=alpha.proj TP_ROOT="$tmp/proj" rcrun "$stub; tp" >/dev/null || true
+okc "tp: '.' iceren klasor adi '_' olur (tmux yasagi)" grep -qxF "new -A -s alpha_proj -c $tmp/proj/alpha.proj" "$LOG"
+: > "$LOG"; FZF_PICK="" TP_ROOT="$tmp/proj" rcrun "$stub; tp" >/dev/null || true
+okc "tp: secim iptal edilirse tmux'a hic dokunulmaz" test ! -s "$LOG"
+okc "tp: olmayan TP_ROOT hata verir" test "$(TP_ROOT="$tmp/yok" rcrun 'tp >/dev/null 2>&1; echo "rc=$?"' | grep -o 'rc=.*')" = "rc=1"
+: > "$LOG"; rcrun "$stub; tm foo" >/dev/null || true
+okc "tm: tmux disinda new -A ile baglanir" grep -qxF "new -A -s foo" "$LOG"
+
+# tmuxt: seri port otomatik bulunur, arayuz ve IP ayarlanabilir
+mkdir -p "$tmp/serial"; : > "$tmp/serial/usb-A"
+: > "$LOG"; TMUXT_SERIAL_DIR="$tmp/serial" TMUXT_ETH=eth9 rcrun "$stub; tmuxt RTS-5" >/dev/null || true
+tl="$(cat "$LOG")"
+okc "tmuxt: seri port by-id dizininden bulunur" has "$tl" "$tmp/serial/usb-A"
+okc "tmuxt: RTS biletinde IP 192.168.111.200, arayuz TMUXT_ETH" has "$tl" "ifconfig eth9 192.168.111.200"
+okc "tmuxt: bilet notlari vimt ile acilir" has "$tl" "vimt RTS-5"
+: > "$LOG"; TMUXT_SERIAL_DIR="$tmp/serial" rcrun "$stub; tmuxt ABC-1" >/dev/null || true
+okc "tmuxt: diger biletlerde IP 192.168.2.200, arayuz eth0" has "$(cat "$LOG")" "ifconfig eth0 192.168.2.200"
+: > "$LOG"; TMUXT_SERIAL_DIR="$tmp/bos" rcrun "$stub; tmuxt ABC-1" >/dev/null || true
+okc "tmuxt: aygit yoksa /dev/ttyUSB0'a duser" has "$(cat "$LOG")" "/dev/ttyUSB0"
+: > "$LOG"; TMUXT_SERIAL=/dev/ttyACM7 TMUXT_SERIAL_DIR="$tmp/serial" rcrun "$stub; tmuxt ABC-1" >/dev/null || true
+okc "tmuxt: TMUXT_SERIAL otomatik bulmayi gecersiz kilar" has "$(cat "$LOG")" "/dev/ttyACM7"
+
 echo
 if [ "$failed" -eq 0 ]; then echo "TUMU GECTI"; else echo "$failed KONTROL BASARISIZ"; exit 1; fi

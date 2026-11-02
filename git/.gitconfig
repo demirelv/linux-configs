@@ -43,4 +43,4 @@
 	va = commit --amend --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
 	vm = "!f() { git commit --author=\"Veli Demirel <demirel.veli@yahoo.com>\" -m \"$1\"; }; f"
 [core]
-	editor = vim
+	editor = nvim

@@ -51,6 +51,25 @@ surum yukseltmek icin commit'i bilincli degistir. Eklentiler yoksa `.tmux.conf` 
 `continuum` periyodik kaydeder ve tmux sunucusu acilirken son kaydi geri yukler. Otomatik kaydi yalnizca
 makinede baska tmux sureci yokken baslatir; ilk acilista kaydin olusmasi bu yuzden gecikebilir.
 
+## Gunluk kisayollar (`bash/.bashrc`)
+
+| Komut | Ne yapar |
+|---|---|
+| `tp [filtre]` | `TP_ROOT` (varsayilan `$HOME`) altindaki klasorlerden birini `fzf` ile sectir; o klasorde, klasor adiyla bir tmux session'i ac ya da bagla. Tek eslesme varsa sormadan acar. |
+| `cdt`, `vimt`, `vimj`, `tmuxt <bilet>` | `~/Documents/FixedIssues/<bilet>` klasorune git / `notes.md` / `notes.jira` ac / bilet icin tmux ortami kur. Hepsinde Tab ile bilet adi tamamlanir. |
+
+Ortam degiskenleri (makineye ozel olanlar `~/.bashrc.local`'a):
+
+| Degisken | Anlami |
+|---|---|
+| `TP_ROOT` | `tp`'nin klasorlerini listeledigi dizin |
+| `TMUXT_SERIAL` | `tmuxt`'nin seri portu. Verilmezse `/dev/serial/by-id` altindaki ilk aygit, o da yoksa `/dev/ttyUSB0`. `by-id` adi aygit yeniden baslasa da degismez. |
+| `TMUXT_ETH` | `tmuxt`'nin ag arayuzu (varsayilan `eth0`) |
+
+`tmuxt`, `tio` kuruluysa onu (aygit yeniden baslayinca otomatik yeniden baglanir), degilse `minicom`'u kullanir.
+`EDITOR`/`VISUAL` bos ya da `vi`/`vim` ise `nvim` olur; baska bir editor bilerek ayarlanmissa ezilmez
+(`git` editoru de `nvim`). Her komuttan sonra gecmis dosyaya eklenir, boylece tmux pane'leri `Ctrl-r` gecmisini paylasir.
+
 ## tmux fonksiyonlari
 
 | Komut | Ne yapar |
@@ -129,10 +148,21 @@ calistirilabilir dosyanin yolunu sorar.
 Notlar: `gr` bilerek bagli degil (Neovim varsayilani `grr` referanslar, `grn` yeniden adlandir,
 `gra` code action). `<C-v>` blok secimi icin birakildi; panoya yapistirmak `<leader>p`.
 
+## Gizli bilgi korumasi (pre-commit)
+
+Repo **public** oldugu icin `.githooks/pre-commit` her commit'te **eklenen** satirlari tarar: ozel anahtar basligi,
+AWS/GitHub/GitLab/Slack token'lari ve `api_key = '...'` gibi atanmis sir degerleri. Bulunan degeri ekrana basmaz,
+yalniz dosya adini soyler. `install.sh` kancayi `core.hooksPath=.githooks` ile etkinlestirir
+(elle: `git config core.hooksPath .githooks`). Gerekirse atlamak icin `git commit --no-verify`.
+
+Makineye ozel degerler (kendi kayit defteri adresin, ozel dizin adin, sirket alan adin) repo'ya yazilmaz;
+`~/.config/linux-configs/deny-patterns` dosyasina her satira bir `grep -E` deseni olarak yazilir
+(`#` yorum ve bos satirlar yok sayilir). Ornek: `\.internal\.example\.com`.
+
 ## Testler
 
 ```bash
-./check.sh          # sozdizimi, shellcheck, kabuk testleri, tmux eklenti testi, nvim testi
+./check.sh          # sozdizimi, shellcheck, kabuk + kanca testleri, tmux eklenti testi, nvim testi
 ./check.sh --fast   # ag gerektiren testleri (tmux eklentileri, nvim) atla
 ```
 

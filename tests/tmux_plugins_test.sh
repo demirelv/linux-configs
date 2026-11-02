@@ -54,6 +54,7 @@ ok "continuum-restore on" test "$(tmux show -gv @continuum-restore)" = "on"
 # "baska surec"i komut satirinda "tmux" gecen her seyle sayar (bu test betigi dahil). Bu yuzden kanca burada
 # guvenilir olculemez; kaydetme yolu asagida resurrect ile dogrudan test edilir.
 ok "prefix hala C-a" test "$(tmux show -gv prefix)" = "C-a"
+ok "escape-time 10 ms (nvim'de Esc gecikmesi yok)" test "$(tmux show -sv escape-time)" = "10"
 
 # nvim <-> tmux gezintisi: baglar ve gercek tespit (sol pane bash, sag pane nvim)
 root_keys="$(tmux list-keys -T root)"
