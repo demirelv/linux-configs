@@ -40,7 +40,8 @@ for b in lc-help lc-doctor lc-issue-hook; do
     check_link "$HOME/.local/bin/$b" "$REPO/bin/$b" "./install.sh"
 done
 if [ -f "$HOME/.gitconfig" ]; then
-    if cmp -s "$REPO/git/.gitconfig" "$HOME/.gitconfig"; then good "~/.gitconfig equals git/.gitconfig"
+    # install-tools.sh adds the delta include to ~/.gitconfig: that is not a difference
+    if cmp -s "$REPO/git/.gitconfig" <(grep -vE '^\[include\]$|^[[:space:]]*path = ~/\.gitconfig\.delta$' "$HOME/.gitconfig"); then good "~/.gitconfig equals git/.gitconfig"
     else warn "~/.gitconfig differs from git/.gitconfig (it is copied, not linked)  -> ./install.sh refreshes it (keeps a backup)"; fi
 else bad "~/.gitconfig missing  -> ./install.sh"; fi
 
@@ -111,7 +112,10 @@ while IFS=$'\t' read -r name _ _ kind; do
     case "$name" in "#"*|"") continue ;; esac
     [ "$kind" = usage ] && continue
     found=0
-    for c in ${CMD[$name]:-$name}; do command -v "$c" >/dev/null 2>&1 && found=1; done
+    for c in ${CMD[$name]:-$name}; do
+        # git sub-commands (git-absorb) live in git's exec-path, not on PATH
+        if command -v "$c" >/dev/null 2>&1 || [ -x "$(git --exec-path 2>/dev/null)/$c" ]; then found=1; fi
+    done
     if [ "$found" -eq 1 ]; then have=$((have + 1))
     elif [ "$kind" = extra ]; then extra_missing+=("$name")
     else apt_missing+=("$name"); fi

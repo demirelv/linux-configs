@@ -36,8 +36,22 @@ out="$(run)"
 ok "baglar kurulunca bag MISS'i yok" not has "$out" "is not a link"
 ok "baglar kurulunca eksik bag yok" not has "$out" "$HOME/.bashrc missing"
 ok "gitconfig ayniysa uyari yok" not has "$out" "~/.gitconfig differs"
+# install-tools.sh git'e delta include'unu ekler: bu bir "fark" sayilmaz
+printf '[include]\n\tpath = ~/.gitconfig.delta\n' >> "$HOME/.gitconfig"
+ok "yalniz delta include'u eklenmisse uyari yok" not has "$(run)" "~/.gitconfig differs"
 echo "# fark" >> "$HOME/.gitconfig"
 ok "gitconfig farkliysa uyarir" has "$(run)" "~/.gitconfig differs"
+cp "$REPO/git/.gitconfig" "$HOME/.gitconfig"
+
+# git alt komutu olan araclar (git-absorb) PATH'te degil git'in exec-path'indedir: kurulu sayilmali
+mkdir -p "$tmp/gx-empty" "$tmp/gx"; printf '#!/bin/sh\n' > "$tmp/gx/git-absorb"; chmod +x "$tmp/gx/git-absorb"
+if ! command -v git-absorb >/dev/null 2>&1; then
+    n_without="$(GIT_EXEC_PATH="$tmp/gx-empty" "$D" 2>&1 | sed -n 's/^ok   \([0-9]*\) tools installed/\1/p')"
+    n_with="$(GIT_EXEC_PATH="$tmp/gx" "$D" 2>&1 | sed -n 's/^ok   \([0-9]*\) tools installed/\1/p')"
+    ok "git-absorb git exec-path'indeyse kurulu sayilir" test "$((n_with - n_without))" -eq 1
+else
+    echo "SKIP git-absorb PATH'te; exec-path testi anlamsiz"
+fi
 
 # /tmp'e giden ~/.fzf.bash yakalanir
 printf 'PATH="$PATH:/tmp/tmp.x/data/nvim/lazy/fzf/bin"\n' > "$HOME/.fzf.bash"
