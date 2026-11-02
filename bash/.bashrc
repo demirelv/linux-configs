@@ -104,6 +104,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 if [ -f ~/.bash_aliases ]; then
+    # shellcheck source=/dev/null
     . ~/.bash_aliases
 fi
 
@@ -118,6 +119,7 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# shellcheck source=/dev/null
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 # cd-ticket-dir
@@ -127,7 +129,7 @@ cdt() {
 	return 1
     fi
     mkdir -p ~/Documents/FixedIssues/"$1"
-    cd ~/Documents/FixedIssues/"$1"
+    cd ~/Documents/FixedIssues/"$1" || return
 }
 # vim-ticket
 vimt() {
@@ -207,3 +209,49 @@ tmj() {
     fi
     tmux join-pane -s "$src" -t "${2:-$cur}"
 }
+
+# --- tm / tmw / tmj icin Tab tamamlamasi ---
+# "main:2" icindeki ":" COMP_WORDBREAKS'te oldugu icin bash gercek terminalde onu uc kelimeye boler
+# (COMP_CWORD sismis olur). bash-completion varsa mantiksal kelime/indeks ondan alinir; yoksa duz COMP_WORDS.
+# Cagiran fonksiyon `local cur cword` tanimlar; asagidaki yardimcilar dinamik kapsamla onlari doldurur.
+_tm_words() {
+    if declare -F _get_comp_words_by_ref >/dev/null; then
+        _get_comp_words_by_ref -n : cur cword
+    else
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        cword="$COMP_CWORD"
+    fi
+}
+_tm_reply() { # $1: aday listesi
+    mapfile -t COMPREPLY < <(compgen -W "$1" -- "$cur")
+    declare -F __ltrim_colon_completions >/dev/null && __ltrim_colon_completions "$cur"
+    return 0
+}
+_tm_sessions() { tmux list-sessions -F '#S' 2>/dev/null; }
+_tm_windows()  { tmux list-windows -a -F '#S:#I' 2>/dev/null; }
+_tm_complete() {
+    local cur cword; _tm_words
+    [ "$cword" -eq 1 ] && _tm_reply "$(_tm_sessions)"
+    return 0
+}
+_tmw_complete() {
+    local cur cword; _tm_words
+    case "$cword" in
+        1) _tm_reply "$(_tm_windows)" ;;
+        2) _tm_reply "$(_tm_sessions)" ;;
+    esac
+    return 0
+}
+_tmj_complete() {
+    local cur cword; _tm_words
+    [ "$cword" -le 2 ] && _tm_reply "$(_tm_windows)"
+    return 0
+}
+complete -F _tm_complete tm
+complete -F _tmw_complete tmw
+complete -F _tmj_complete tmj
+
+# Makineye ozel ayarlar (PATH, nvm, bun, takma adlar, kayit defteri adresleri, sirlar).
+# Bu dosya repo'ya GIRMEZ; her makinede kendi ~/.bashrc.local'i olur.
+# shellcheck source=/dev/null
+[ -f ~/.bashrc.local ] && source ~/.bashrc.local

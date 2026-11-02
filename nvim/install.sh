@@ -4,6 +4,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../lib/link.sh
+source "$SCRIPT_DIR/../lib/link.sh"
 
 echo "Installing C/C++ dev env with Neovim"
 
@@ -58,10 +60,8 @@ echo "Setting up Neovim config..."
 NVIM_CONFIG_DIR="$HOME/.config/nvim"
 mkdir -p "$NVIM_CONFIG_DIR"
 
-if [ -e "$NVIM_CONFIG_DIR/init.lua" ] && ! cmp -s "$SCRIPT_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua"; then
-    cp -a "$NVIM_CONFIG_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua.bak.$(date +%Y%m%d-%H%M%S)"
-fi
-cp "$SCRIPT_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua"
+# Sembolik bag: repo'daki init.lua'yi duzenlemek canli config'i de gunceller.
+link_file "$SCRIPT_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua"
 
 # lazy.nvim'i init.lua kendisi bootstrap ediyor (stdpath("data")/lazy/lazy.nvim),
 # burada ayrica klonlamaya gerek yok. Eklentileri simdi kur:

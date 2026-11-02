@@ -3,7 +3,7 @@
 # Kullanim:
 #   ./install.sh                    # varsayilan kurulum (nvim + araclar + dotfile'lar)
 #   ./install.sh --with-wireshark   # wireshark'i da kur
-#   ./install.sh --no-dotfiles      # dotfile kopyalamayi atla
+#   ./install.sh --no-dotfiles      # dotfile kurulumunu atla
 #   ./install.sh -h                 # yardim
 
 set -euo pipefail
@@ -11,6 +11,8 @@ set -euo pipefail
 WITH_WIRESHARK=0
 WITH_DOTFILES=1
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/link.sh
+source "$REPO_DIR/lib/link.sh"
 
 usage() {
     sed -n '2,8p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
@@ -38,7 +40,8 @@ sudo apt-get install -y \
     meld \
     htop \
     tmux \
-    microcom
+    microcom \
+    shellcheck
 
 # Opsiyonel: yeni Ubuntu surumlerinde paket olmayabilir, kurulum durmasin.
 # indicator-multiload GNOME'da gorunmesi icin app-indicator eklentisi gerekir.
@@ -66,17 +69,34 @@ echo "==> neovim ortami kuruluyor"
 ( cd "$REPO_DIR/nvim" && bash ./install.sh )
 
 if [ "$WITH_DOTFILES" -eq 1 ]; then
-    echo "==> dotfile'lar kopyalaniyor"
+    echo "==> dotfile'lar kuruluyor"
+    # Sembolik bag: repo'daki dosyayi duzenlemek $HOME'u da gunceller, ayrisma olmaz.
+    link_file "$REPO_DIR/bash/.bashrc" "$HOME/.bashrc"
+    link_file "$REPO_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
+
+    # .gitconfig KOPYALANIR (baglanmaz): icindeki kullanici kimligi makineye gore degisebilir.
     stamp="$(date +%Y%m%d-%H%M%S)"
-    for src in "$REPO_DIR/bash/.bashrc" "$REPO_DIR/tmux/.tmux.conf" "$REPO_DIR/git/.gitconfig"; do
-        dst="$HOME/$(basename "$src")"
-        if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
-            cp -a "$dst" "$dst.bak.$stamp"
-            echo "    yedek: $dst.bak.$stamp"
-        fi
-        cp "$src" "$dst"
-        echo "    kuruldu: $dst"
-    done
+    src="$REPO_DIR/git/.gitconfig"; dst="$HOME/.gitconfig"
+    if [ -e "$dst" ] && ! cmp -s "$src" "$dst"; then
+        cp -a "$dst" "$dst.bak.$stamp"
+        echo "    yedek: $dst.bak.$stamp"
+    fi
+    cp "$src" "$dst"
+    echo "    kuruldu: $dst"
+
+    if [ ! -e "$HOME/.bashrc.local" ]; then
+        echo "    NOT: makineye ozel satirlar (PATH, nvm, takma adlar, sirlar) ~/.bashrc.local dosyasina yazilir;"
+        echo "         .bashrc onu otomatik okur. Yedeklenen eski .bashrc'den tasiyabilirsin."
+    fi
+
+    # tmux oturum kalicligi: resurrect (kaydet/geri yukle) + continuum (otomatik kaydet).
+    # tmux-plugins organizasyonu (MIT); kod her tmux acilisinda calisir, bu yuzden commit'e sabit.
+    echo "==> tmux eklentileri"
+    mkdir -p "$HOME/.tmux/plugins"
+    clone_pinned https://github.com/tmux-plugins/tmux-resurrect \
+        "$HOME/.tmux/plugins/tmux-resurrect" cff343cf9e81983d3da0c8562b01616f12e8d548
+    clone_pinned https://github.com/tmux-plugins/tmux-continuum \
+        "$HOME/.tmux/plugins/tmux-continuum" 0698e8f4b17d6454c71bf5212895ec055c578da0
 fi
 
 echo
