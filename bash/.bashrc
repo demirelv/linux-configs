@@ -167,6 +167,43 @@ tmuxt() {
 }
 
 # tmux: varsa session'a baglan, yoksa olustur. Kullanim: tm [isim]  (varsayilan: main)
+# tmux icindeyse ic ice acmaz, switch-client ile gecer.
 tm() {
-    tmux new -A -s "${1:-main}"
+    local name="${1:-main}"
+    if [ -n "$TMUX" ]; then
+        tmux has-session -t "$name" 2>/dev/null || tmux new -d -s "$name"
+        tmux switch-client -t "$name"
+    else
+        tmux new -A -s "$name"
+    fi
+}
+
+# tmux: baska session'daki pencereyi tasi. Kullanim: tmw kaynak [hedef]
+#   kaynak: session:pencere (ornek main:2)   hedef: session: (varsayilan: simdiki session)
+tmw() {
+    [ -n "$1" ] || { echo "kullanim: tmw session:pencere [hedef_session]" >&2; return 1; }
+    local dst="${2:-$(tmux display-message -p '#S')}"
+    tmux move-window -s "$1" -t "${dst%:}:"
+}
+
+# tmux: baska session'daki pencereyi simdiki pencereye pane olarak birlestir.
+# Kullanim: tmj [kaynak] [hedef]   kaynak/hedef: session:pencere (hedef varsayilan: simdiki pencere)
+#   Parametresiz: tum session/pencereler arasindan sectirir (fzf varsa fzf, yoksa numarali menu).
+tmj() {
+    local src="$1" cur
+    cur="$(tmux display-message -p '#S:#I')" || return 1
+    if [ -z "$src" ]; then
+        local list
+        list="$(tmux list-windows -a -F '#{session_name}:#{window_index}  #{window_name}  [#{window_panes} pane]  #{pane_current_command}' \
+                | awk -v cur="$cur" '$1 != cur')"
+        [ -n "$list" ] || { echo "tmj: baska pencere yok" >&2; return 1; }
+        if command -v fzf >/dev/null 2>&1; then
+            src="$(printf '%s\n' "$list" | fzf --prompt='pencere> ' --height=40% --reverse | awk '{print $1}')"
+        else
+            local line
+            select line in $(printf '%s\n' "$list" | awk '{print $1}'); do src="$line"; break; done
+        fi
+        [ -n "$src" ] || return 1
+    fi
+    tmux join-pane -s "$src" -t "${2:-$cur}"
 }
