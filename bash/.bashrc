@@ -367,5 +367,15 @@ _yardim_complete() {
 }
 complete -F _yardim_complete yardim
 
-# help: lc-help [words] -- Search all commands, keys and tools of this repo (Ctrl-x h; in tmux Prefix F1; -k keys only)
-if command -v lc-help >/dev/null 2>&1; then bind '"\C-xh": "lc-help\C-m"'; fi
+# help: lc-help [words] -- Search all commands, keys and tools of this repo (Ctrl-x h picks one and types it for you; -k keys only; tmux Prefix F1)
+_lc_help_pick() {
+    local text
+    text="$(lc-help --pick </dev/tty)" || return 0
+    [ -n "$text" ] || return 0
+    READLINE_LINE="${READLINE_LINE:0:READLINE_POINT}${text}${READLINE_LINE:READLINE_POINT}"
+    READLINE_POINT=$((READLINE_POINT + ${#text}))
+}
+if command -v lc-help >/dev/null 2>&1; then
+    bind -x '"\C-xh": _lc_help_pick'
+    complete -W 'cmd env git local tmux nvim tool -k --keys -l --list --pick --tsv --popup --rebuild -h --help' lc-help
+fi

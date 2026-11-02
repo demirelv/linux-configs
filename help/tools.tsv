@@ -115,3 +115,6 @@ tokei	Lines per language	tokei	usage
 tokei	Sorted by lines	tokei -s lines	usage
 jless	View a JSON file	jless FILE.json	usage
 xh	POST with form fields	xh post URL a=b	usage
+lc-doctor	Check this machine against linux-configs (links, programs, plugins, missing tools)	lc-doctor -q	usage
+lc-issue-hook	Require an Issue: KEY-123 line in commit messages of a repo (Gerrit)	lc-issue-hook install	usage
+lc-issue-hook	Check whether the hook is installed in a repo	lc-issue-hook status	usage

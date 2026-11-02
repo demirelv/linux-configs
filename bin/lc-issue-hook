@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# lc-issue-hook: install or remove the commit-msg hook that demands an `Issue: KEY-123` line.
+#   lc-issue-hook install [repo]     link git/hooks/commit-msg into the repo's hooks directory (default: current repo)
+#   lc-issue-hook uninstall [repo]   remove it (only when it is our link)
+#   lc-issue-hook status [repo]      installed or not
+# Not for the linux-configs repo itself (its commits carry no Issue line).
+set -Eeuo pipefail
+
+SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
+REPO="$(cd -- "$(dirname -- "$SELF")/.." && pwd)"
+HOOK_SRC="$REPO/git/hooks/commit-msg"
+
+usage() { sed -n '2,6p' "$SELF" | sed 's/^# \{0,1\}//'; }
+
+cmd="${1:-}"; [ $# -gt 0 ] && shift
+target="${1:-.}"
+
+case "$cmd" in
+    install|uninstall|status) ;;
+    -h|--help|"") usage; [ -n "$cmd" ] || exit 1; exit 0 ;;
+    *) echo "lc-issue-hook: unknown command '$cmd'" >&2; usage >&2; exit 1 ;;
+esac
+
+top="$(git -C "$target" rev-parse --show-toplevel 2>/dev/null)" || { echo "lc-issue-hook: $target is not a git repository" >&2; exit 1; }
+if [ "$(readlink -f -- "$top")" = "$REPO" ]; then
+    echo "lc-issue-hook: refusing to touch the linux-configs repo itself" >&2; exit 1
+fi
+hooks_dir="$(cd "$top" && readlink -f -- "$(git rev-parse --git-path hooks)")"
+dst="$hooks_dir/commit-msg"
+
+is_ours() { [ -L "$dst" ] && [ "$(readlink -f -- "$dst")" = "$(readlink -f -- "$HOOK_SRC")" ]; }
+
+case "$cmd" in
+    install)
+        if is_ours; then echo "already installed: $dst"; exit 0; fi
+        if [ -e "$dst" ] || [ -L "$dst" ]; then
+            echo "lc-issue-hook: $dst exists and is not ours; move it away first" >&2; exit 1
+        fi
+        mkdir -p "$hooks_dir"
+        ln -s "$HOOK_SRC" "$dst"
+        echo "installed: $dst -> $HOOK_SRC" ;;
+    uninstall)
+        if is_ours; then rm -- "$dst"; echo "removed: $dst"; else echo "not installed (nothing to remove): $dst"; fi ;;
+    status)
+        if is_ours; then echo "installed: $dst"; else echo "not installed: $dst"; fi ;;
+esac

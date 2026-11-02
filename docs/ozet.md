@@ -12,8 +12,10 @@ Konular: `yardim -l` (kabuk, tmux, nvim, araclar, guvenlik-ve-testler). Bir sey 
 | `tmw session:pencere` | Baska session'daki pencereyi buraya tasi |
 | `tmj [session:pencere]` | Pencereyi pane olarak birlestir (parametresiz: secim menusu) |
 | `cdt` `vimt` `vimj` `tmuxt <bilet>` | Bilet klasorune git / notes.md / notes.jira / tmux ortami (Tab tamamlar) |
-| `lc-help [kelime]` | Komut, tmux/nvim kisayolu, arac ara (Ingilizce; `Ctrl-x h`, tmux `Prefix F1`) |
+| `lc-help [kelime]` | Komut, tmux/nvim kisayolu, arac ara (Ingilizce; `Ctrl-x h` secileni komut satirina yazar, tmux `Prefix F1`, nvim `<leader>fl`) |
 | `yardim [konu]` | Bu dokumanlar (Turkce) |
+| `lc-doctor` | Bu makine repoyla uyumlu mu: baglar, programlar, eklentiler, eksik araclar |
+| `lc-issue-hook install` | Bu repoda commit mesajinda `Issue: KEY-123` satiri zorunlu olsun (Gerrit) |
 | `z <klasor>` | En cok gittigin klasore atla (zoxide kuruluysa) |
 
 ## tmux (prefix `Ctrl-a`)

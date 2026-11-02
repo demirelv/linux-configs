@@ -87,6 +87,8 @@ if [ "$WITH_DOTFILES" -eq 1 ]; then
     link_file "$REPO_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
     # lc-help: komut/kisayol arama (kabukta Ctrl-x h, tmux Prefix F1). ~/.local/bin PATH'te olmali.
     link_file "$REPO_DIR/bin/lc-help" "$HOME/.local/bin/lc-help"
+    link_file "$REPO_DIR/bin/lc-doctor" "$HOME/.local/bin/lc-doctor"           # kurulum denetimi
+    link_file "$REPO_DIR/bin/lc-issue-hook" "$HOME/.local/bin/lc-issue-hook"   # Gerrit Issue: kancasi
 
     # .gitconfig KOPYALANIR (baglanmaz): icindeki kullanici kimligi makineye gore degisebilir.
     stamp="$(date +%Y%m%d-%H%M%S)"
@@ -111,6 +113,9 @@ if [ "$WITH_DOTFILES" -eq 1 ]; then
         "$HOME/.tmux/plugins/tmux-resurrect" cff343cf9e81983d3da0c8562b01616f12e8d548
     clone_pinned https://github.com/tmux-plugins/tmux-continuum \
         "$HOME/.tmux/plugins/tmux-continuum" 0698e8f4b17d6454c71bf5212895ec055c578da0
+    # extrakto (laktak, MIT): ekrandaki metni fzf ile secip kopyalar (Prefix + Tab). python3 + fzf gerekir.
+    clone_pinned https://github.com/laktak/extrakto \
+        "$HOME/.tmux/plugins/extrakto" d1af77988081dae496fa4a1f5e5e6bc9ef66767f
 fi
 
 # Gelistirici araclari (delta, fd, bat, zoxide, cppcheck ...): dotfile'lardan SONRA, git include'u ~/.gitconfig'e eklensin diye

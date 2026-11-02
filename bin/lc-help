@@ -3,25 +3,31 @@
 #
 #   lc-help                       fuzzy search everything (fzf; a plain list when not on a terminal)
 #   lc-help <word>...             entries that contain all the words (case-insensitive)
-#   lc-help cmd|env|tmux|nvim|tool [word]...   only entries of one kind
+#   lc-help cmd|env|git|local|tmux|nvim|tool [word]...   only entries of one kind
 #   lc-help -k, --keys [word]...  tmux and Neovim key bindings only
 #   lc-help -l, --list            kinds with their entry counts
+#   lc-help --pick [word]...      choose with fzf and print the text to type (Ctrl-x h in bash inserts it)
+#   lc-help --tsv [word]...       print the raw index lines (kind, key, description, source, example)
 #   lc-help --popup               like no argument, then wait for a key (used by tmux: Prefix + F1)
 #   lc-help --rebuild             rebuild the index now (otherwise it is rebuilt when a source changed)
 #   lc-help -h, --help
 #
 # Nothing is typed twice. The index is generated from: `# help:` and `# help-env:` lines in bash/.bashrc,
-# `bind-key -N` notes in tmux/.tmux.conf, the desc of every Neovim keymap (bin/lc-help-nvim.lua) and
-# help/tools.tsv. Cache: ${LC_HELP_CACHE:-~/.cache/lc-help}/index.tsv  (kind, key, description, source, example)
+# `# help:` lines above aliases in git/.gitconfig, `bind-key -N` notes in tmux/.tmux.conf, the desc of every
+# Neovim keymap (bin/lc-help-nvim.lua) and help/tools.tsv. Machine-local entries (kind local) come from
+# `# help:` lines in ~/.bashrc.local and from ~/.config/lc-help/extra.tsv (key<TAB>description<TAB>example).
+# Cache: ${LC_HELP_CACHE:-~/.cache/lc-help}/index.tsv  (kind, key, description, source, example)
 set -Eeuo pipefail
 
 SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
 REPO="$(cd -- "$(dirname -- "$SELF")/.." && pwd)"
 CACHE_DIR="${LC_HELP_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/lc-help}"
 INDEX="$CACHE_DIR/index.tsv"
-KINDS="cmd env tmux nvim tool"
+KINDS="cmd env git local tmux nvim tool"
+LOCAL_BASHRC="${LC_HELP_BASHRC_LOCAL:-$HOME/.bashrc.local}"
+LOCAL_EXTRA="${LC_HELP_EXTRA:-${XDG_CONFIG_HOME:-$HOME/.config}/lc-help/extra.tsv}"
 
-usage() { sed -n '2,12p' "$SELF" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,/^# Cache:/p' "$SELF" | sed 's/^# \{0,1\}//'; }
 
 # ---------- sources -> index ----------
 
@@ -30,6 +36,35 @@ entries_shell() {
     [ -f "$f" ] || return 0
     sed -n 's/^# help: \(.*\) -- \(.*\)$/cmd\t\1\t\2\tbash\/.bashrc/p' "$f"
     sed -n 's/^# help-env: \([A-Za-z_][A-Za-z0-9_]*\) -- \(.*\)$/env\t\1\t\2\tbash\/.bashrc/p' "$f"
+}
+
+# Aliases of git/.gitconfig. A `# help: text` line above an alias is its description; without one a simple alias
+# shows what it expands to and a shell function alias (starts with !) gets a generic text.
+entries_git() {
+    local f="$REPO/git/.gitconfig"
+    [ -f "$f" ] || return 0
+    awk '
+        /^\[/ { in_alias = ($0 == "[alias]"); next }
+        !in_alias { next }
+        /^[ \t]*#[ \t]*help:/ { t = $0; sub(/^[ \t]*#[ \t]*help:[ \t]*/, "", t); pending = t; next }
+        /^\t[A-Za-z0-9_-]+ = / {
+            name = $1; val = $0; sub(/^\t[^=]*= /, "", val); gsub(/^"|"$/, "", val); gsub(/\\"/, "\"", val)
+            desc = pending
+            if (desc == "") desc = (val ~ /^!/) ? "Custom git command (see git/.gitconfig)" : "git " val
+            if (length(desc) > 90) desc = substr(desc, 1, 87) "..."
+            printf "git\tgit %s\t%s\tgit/.gitconfig\tgit %s\n", name, desc, name
+            pending = ""
+        }' "$f"
+}
+
+# Machine-local entries: never in the repo. ~/.bashrc.local `# help:` lines and ~/.config/lc-help/extra.tsv.
+entries_local() {
+    if [ -f "$LOCAL_BASHRC" ]; then
+        sed -n 's/^# help: \(.*\) -- \(.*\)$/local\t\1\t\2\t~\/.bashrc.local/p' "$LOCAL_BASHRC"
+    fi
+    if [ -f "$LOCAL_EXTRA" ]; then
+        awk -F'\t' '!/^#/ && NF >= 2 { printf "local\t%s\t%s\t~/.config/lc-help/extra.tsv\t%s\n", $1, $2, $3 }' "$LOCAL_EXTRA"
+    fi
 }
 
 # Starts a throw-away tmux server with the repo config and reads the key notes (list-keys -N).
@@ -62,19 +97,28 @@ entries_tools() {
     awk -F'\t' '!/^#/ && NF >= 2 { printf "tool\t%s\t%s\t%s\t%s\n", $1, $2, ($4 == "extra" ? "docs/araclar.md (not in apt)" : ($4 == "usage" ? "help/tools.tsv (usage example)" : "tools/install-tools.sh")), $3 }' "$f"
 }
 
+# Which machine-local sources exist now; a change (file added or removed) makes the index stale.
+local_sig() { printf '%s:%s|%s:%s\n' "$LOCAL_BASHRC" "$([ -f "$LOCAL_BASHRC" ] && echo 1 || echo 0)" \
+    "$LOCAL_EXTRA" "$([ -f "$LOCAL_EXTRA" ] && echo 1 || echo 0)"; }
+
 build_index() {
     mkdir -p "$CACHE_DIR"
     local tmp; tmp="$(mktemp "$CACHE_DIR/index.XXXXXX")"
-    { entries_shell; entries_tmux; entries_nvim; entries_tools; } \
+    { entries_shell; entries_git; entries_local; entries_tmux; entries_nvim; entries_tools; } \
         | awk -F'\t' 'BEGIN { OFS = "\t" } { NF = 5; print }' \
         | sort -t "$(printf '\t')" -k1,1 -k2,2 -s > "$tmp"
     mv -f "$tmp" "$INDEX"
+    local_sig > "$CACHE_DIR/local.sig"
 }
 
 index_is_stale() {
     [ -s "$INDEX" ] || return 0
-    find "$REPO/bash/.bashrc" "$REPO/tmux/.tmux.conf" "$REPO/help" "$REPO/bin/lc-help-nvim.lua" \
-        "$REPO/nvim/init.lua" "$REPO/nvim/lua" -newer "$INDEX" -print -quit 2>/dev/null | grep -q .
+    [ "$(cat "$CACHE_DIR/local.sig" 2>/dev/null)" = "$(local_sig)" ] || return 0
+    local src=("$REPO/bash/.bashrc" "$REPO/git/.gitconfig" "$REPO/tmux/.tmux.conf" "$REPO/help" "$REPO/bin/lc-help-nvim.lua"
+        "$REPO/nvim/init.lua" "$REPO/nvim/lua")
+    [ -f "$LOCAL_BASHRC" ] && src+=("$LOCAL_BASHRC")
+    [ -f "$LOCAL_EXTRA" ] && src+=("$LOCAL_EXTRA")
+    find "${src[@]}" -newer "$INDEX" -print -quit 2>/dev/null | grep -q .
 }
 
 # ---------- views ----------
@@ -96,26 +140,45 @@ preview() { # $1: one index line (tab separated)
         if ($5 != "") printf "Example:  %s\n", $5 }'
 }
 
-pick() { # stdin: index lines; $1: initial query
+pick_line() { # stdin: index lines; $1: initial query; prints the chosen index line (nothing when cancelled)
     local line
     line="$(awk -F'\t' '{ printf "%-5s %-32s %s\t%s\n", $1, $2, $3, $0 }' \
         | fzf --delimiter=$'\t' --with-nth=1 --prompt='lc-help> ' --query="${1:-}" --layout=reverse \
               --border --preview="$SELF --preview-line {2..}" --preview-window='right,42%,wrap')" || return 0
     [ -n "$line" ] || return 0
-    printf '%s\n' "${line#*$'\t'}" | { preview "$(cat)"; }
+    printf '%s\n' "${line#*$'\t'}"
+}
+
+pick() { # stdin: index lines; $1: initial query
+    local line
+    line="$(pick_line "${1:-}")" || return 0
+    [ -n "$line" ] || return 0
+    preview "$line"
+}
+
+# The text to type for an index line: the example when there is one, else the command or key itself.
+# Key bindings (tmux, nvim) are not typed anywhere: nothing is printed.
+insert_text() { # $1: one index line (tab separated)
+    printf '%s\n' "$1" | awk -F'\t' '{
+        if ($1 == "tmux" || $1 == "nvim") exit
+        t = $5
+        if (t == "") { t = $2; if ($1 == "cmd" || $1 == "local") sub(/ .*/, "", t) }
+        print t }'
 }
 
 main() {
-    local popup=0 kinds="$KINDS" words=()
+    local popup=0 pickmode=0 tsv=0 kinds="$KINDS" words=()
     while [ $# -gt 0 ]; do
         case "$1" in
             -h|--help) usage; return 0 ;;
             --preview-line) preview "$2"; return 0 ;;
             --rebuild) build_index; echo "lc-help: index rebuilt ($(wc -l < "$INDEX") entries) at $INDEX"; return 0 ;;
             --popup) popup=1 ;;
+            --pick) pickmode=1 ;;
+            --tsv) tsv=1 ;;
             -k|--keys) kinds="tmux nvim" ;;
             -l|--list) LIST=1 ;;
-            cmd|env|tmux|nvim|tool) if [ ${#words[@]} -eq 0 ] && [ "$kinds" = "$KINDS" ]; then kinds="$1"; else words+=("$1"); fi ;;
+            cmd|env|git|local|tmux|nvim|tool) if [ ${#words[@]} -eq 0 ] && [ "$kinds" = "$KINDS" ]; then kinds="$1"; else words+=("$1"); fi ;;
             *) words+=("$1") ;;
         esac
         shift
@@ -129,6 +192,25 @@ main() {
     fi
 
     local data; data="$(kind_filter "$kinds" < "$INDEX")"
+
+    if [ "$tsv" -eq 1 ]; then
+        if [ ${#words[@]} -gt 0 ]; then data="$(printf '%s\n' "$data" | word_filter "${words[@]}")"; fi
+        [ -z "$data" ] || printf '%s\n' "$data"
+        return 0
+    fi
+
+    if [ "$pickmode" -eq 1 ]; then
+        if ! { [ -t 0 ] && command -v fzf >/dev/null 2>&1; }; then
+            echo "lc-help --pick needs fzf and a terminal on stdin" >&2; return 1
+        fi
+        local chosen text
+        chosen="$(printf '%s\n' "$data" | pick_line "${words[*]:-}")" || return 0
+        [ -n "$chosen" ] || return 0
+        text="$(insert_text "$chosen")"
+        if [ -n "$text" ]; then printf '%s\n' "$text"; else preview "$chosen" >&2; fi
+        return 0
+    fi
+
     local interactive=0
     if [ -t 0 ] && [ -t 1 ] && command -v fzf >/dev/null 2>&1; then interactive=1; fi
 

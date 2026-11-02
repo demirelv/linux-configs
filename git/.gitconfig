@@ -2,9 +2,13 @@
 	name = veli demirel
 	email = demirel.veli@yahoo.com
 [alias]
+	# help: Blame a line range: git bl 10,20 FILE
 	bl = "!f() { if [ \"$#\" -eq 2 ]; then git blame -L \"$1\" -- \"$2\"; else echo \"Usage: git bl <line-num-1>,<line-num-2> <file-name>\"; fi; }; f"
+	# help: Show the last N commits (default 1): git sh 3
 	sh = "!f() { git show -${1:-1}; }; f"
+	# help: One-line log with short hashes
 	l = "log --pretty=format:\"%C(auto)%h %C(green)%s\""
+	# help: One-line log with author and relative date
 	ll = "log --pretty=format:\"%C(auto)%h %C(green)%s %C(blue)(%aN) %C(auto)%ar\""
 	a = add
 	aa = add .
@@ -18,6 +22,7 @@
 	ds = diff --staged
 	s = status
 	su = status -uno
+	# help: Status of every git repository below here (-v lists changes and unpushed commits): git sa -v 3
 	sa = "!f() { \
 		v=0; if [ \"$1\" = \"-v\" ]; then v=1; shift; fi; \
 		depth=${1:-4}; root=${2:-.}; \
@@ -39,8 +44,11 @@
 	sp = stash pop
 	pr = pull --rebase
 	rc = rebase --continue
+	# help: Commit as veli demirel (author override)
 	v = commit --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
+	# help: Amend the last commit as veli demirel
 	va = commit --amend --author=\"Veli Demirel <demirel.veli@yahoo.com>\"
+	# help: Commit with a message as veli demirel: git vm "message"
 	vm = "!f() { git commit --author=\"Veli Demirel <demirel.veli@yahoo.com>\" -m \"$1\"; }; f"
 [core]
 	editor = nvim

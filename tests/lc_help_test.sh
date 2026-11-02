@@ -12,6 +12,8 @@ not() { ! "$@"; }
 has() { grep -qF -- "$2" <<<"$1"; }
 
 export LC_HELP_CACHE="$tmp/cache"
+# Makineye ozel kaynaklar: gercek ~/.bashrc.local ve extra.tsv testi etkilemesin
+export LC_HELP_BASHRC_LOCAL="$tmp/none.bashrc" LC_HELP_EXTRA="$tmp/none.tsv"
 L="$REPO/bin/lc-help"
 "$L" --rebuild >/dev/null
 IDX="$LC_HELP_CACHE/index.tsv"
@@ -65,6 +67,38 @@ ok "eslesme yokken stderr'e mesaj yazar" has "$("$L" zzzz-hic-yok 2>&1 || true)"
 ok "--preview-line alanlari yazar" has "$("$L" --preview-line $'tool\tbear\tDescribes bear\tsrc\tbear -- make')" "Example:  bear -- make"
 ok "-h kullanimi gosterir" has "$("$L" -h)" "fuzzy search"
 
+# 6b) git alias'lari, makineye ozel girdiler, --tsv, --pick, tamamlama
+ok "git alias girdileri var (git pub gibi gercek alias)" test "$(count git)" -ge 20
+ok "git alias: help yorumu aciklama olur" has "$("$L" git sa)" "Status of every git repository"
+ok "git alias: basit alias acilimini gosterir" has "$("$L" git pr)" "git pull --rebase"
+ok "--tsv ham 5 alanli satir basar" test "$("$L" --tsv git sa | awk -F'\t' '{print NF}' | sort -u)" = 5
+ok "--tsv eslesme yoksa bos ve basarili" test -z "$("$L" --tsv zzzz-hic-yok)"
+
+printf 'mynote\tMy own note\tls -la ~/projects\n' > "$tmp/extra.tsv"
+printf '# help: mycmd [x] -- Local helper from bashrc.local\n' > "$tmp/bashrc.local"
+loc="$(LC_HELP_EXTRA="$tmp/extra.tsv" LC_HELP_BASHRC_LOCAL="$tmp/bashrc.local" "$L" local)"
+ok "local: extra.tsv satiri indekse girer" has "$loc" "My own note"
+ok "local: .bashrc.local help satiri indekse girer" has "$loc" "Local helper from bashrc.local"
+ok "local girdileri varsayilan yolda yokken bos" not has "$("$L" --tsv)" "My own note"
+rm -f "$tmp/extra.tsv" "$tmp/bashrc.local"
+
+ok "--pick terminalsiz hata verir" not bash -c '"$1" --pick </dev/null' _ "$L"
+if command -v fzf >/dev/null 2>&1 && command -v script >/dev/null 2>&1; then
+    pk="$(FZF_DEFAULT_OPTS='--exact --select-1 --exit-0' script -qec "$L --pick atuin Usage" /dev/null 2>&1 | tr -d '\r' | sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g')"
+    ok "--pick: ornek komutu yazar (atuin stats)" has "$pk" "atuin stats"
+    pk="$(FZF_DEFAULT_OPTS='--exact --select-1 --exit-0' script -qec "$L --pick tmj" /dev/null 2>&1 | tr -d '\r' | sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g')"
+    ok "--pick: komut girdisinde yalniz komut adi yazilir" test "$(grep -cx 'tmj' <<<"$pk")" -ge 1
+    pk="$(FZF_DEFAULT_OPTS='--exact --select-1 --exit-0' script -qec "$L --pick tmux reload" /dev/null 2>&1 | tr -d '\r' | sed 's/\x1b\[[0-9;?]*[a-zA-Z]//g')"
+    ok "--pick: tus kisayolunda metin yazilmaz, ayrinti gosterilir" has "$pk" "Key:      Prefix r"
+else
+    echo "SKIP --pick fzf testleri (fzf ya da script yok)"
+fi
+
+sed -n '/^_lc_help_pick() {/,/^}/p' "$REPO/bash/.bashrc" > "$tmp/pick.bash"
+mkdir -p "$tmp/fakebin"
+printf '#!/bin/sh\necho "ls -la"\n' > "$tmp/fakebin/lc-help"; chmod +x "$tmp/fakebin/lc-help"
+res="$(PATH="$tmp/fakebin:$PATH" script -qec "bash -c 'source $tmp/pick.bash; READLINE_LINE=\"sudo  now\"; READLINE_POINT=5; _lc_help_pick; echo \"[\$READLINE_LINE] \$READLINE_POINT\"'" /dev/null 2>&1 | tr -d '\r' || true)"
+ok "Ctrl-x h islevi metni imlecin yerine ekler" has "$res" "[sudo ls -la now] 11"
 # 7) kaynak degisince indeks yeniden uretilir
 before="$(stat -c %Y "$IDX")"
 sleep 1; touch "$REPO/help/tools.tsv"

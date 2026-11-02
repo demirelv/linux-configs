@@ -17,6 +17,7 @@ Tum kisayollarin aciklamasi var. Hepsini aramak icin:
 |---|---|
 | `<F1>` ya da `<leader>fk` | Kisayol ara (popup, yazdikca filtreler) |
 | `<leader>fc` | Komut ara |
+| `<leader>fl` | `lc-help` indeksinde ara (kabuk komutlari, git alias, tmux tuslari, araclar); Enter metni panoya kopyalar |
 | `<leader>?` | Bu buffer'in kisayollari (which-key) |
 | `<leader>` yazip bekle | which-key, gruplari ve devamini gosterir |
 

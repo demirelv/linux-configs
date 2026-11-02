@@ -31,6 +31,9 @@ ok "install.sh'de iki eklenti commit'i sabitli" both_set "$SHA_R" "$SHA_C"
 export HOME="$tmp/home" TMUX_TMPDIR="$tmp/sock"; mkdir -p "$HOME" "$TMUX_TMPDIR"; unset TMUX
 conf="$REPO/tmux/.tmux.conf"
 
+SHA_E="$(grep -A1 "laktak/extrakto" "$REPO/install.sh" | grep -oE '[0-9a-f]{40}' | head -n1)"
+ok "install.sh'de extrakto commit'i sabitli" test -n "$SHA_E"
+
 # 1) Eklenti kurulu DEGILKEN conf hatasiz yuklenmeli (if-shell korumasi)
 out="$(tmux -f "$conf" start-server \; show -g @continuum-restore 2>&1 || true)"
 ok "eklenti yokken tmux.conf hatasiz" quiet "$out"
@@ -42,11 +45,15 @@ source "$REPO/lib/link.sh"
 clone_pinned https://github.com/tmux-plugins/tmux-resurrect "$HOME/.tmux/plugins/tmux-resurrect" "$SHA_R" >/dev/null
 clone_pinned https://github.com/tmux-plugins/tmux-continuum "$HOME/.tmux/plugins/tmux-continuum" "$SHA_C" >/dev/null
 ok "tmux-resurrect sabit commit'te" test "$(git -C "$HOME/.tmux/plugins/tmux-resurrect" rev-parse HEAD)" = "$SHA_R"
+clone_pinned https://github.com/laktak/extrakto "$HOME/.tmux/plugins/extrakto" "$SHA_E" >/dev/null
+ok "extrakto sabit commit'te" test "$(git -C "$HOME/.tmux/plugins/extrakto" rev-parse HEAD)" = "$SHA_E"
 ok "tmux-continuum sabit commit'te" test "$(git -C "$HOME/.tmux/plugins/tmux-continuum" rev-parse HEAD)" = "$SHA_C"
 
 tmux -f "$conf" new-session -d -s t1
 sleep 1
 keys="$(tmux list-keys 2>&1)"
+ok "extrakto: Prefix + Tab open.sh'e bagli" grep -qE 'bind-key +-N .*-T prefix +Tab|bind-key +-T prefix +Tab' <<<"$keys"
+ok "extrakto: open.sh calistirilabilir dosya" test -x "$HOME/.tmux/plugins/extrakto/scripts/open.sh"
 ok "resurrect: Prefix + Ctrl-s kaydet kisayolu bagli" grep -q 'resurrect.*save.sh' <<<"$keys"
 ok "resurrect: Prefix + Ctrl-r geri yukle kisayolu bagli" grep -q 'resurrect.*restore.sh' <<<"$keys"
 ok "continuum-restore on" test "$(tmux show -gv @continuum-restore)" = "on"

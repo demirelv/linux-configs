@@ -11,6 +11,8 @@ map("n", "<leader>xq", "<cmd>Trouble qflist toggle<CR>", { desc = "Quickfix list
 map("n", "<leader>xl", "<cmd>Trouble lsp toggle focus=false win.position=right<CR>",
   { desc = "LSP definitions/references panel" })
 map("n", "<leader>xt", "<cmd>Trouble todo toggle<CR>", { desc = "TODO list (Trouble)" })
+map("n", "<leader>fl", function() require("cfg.lc_help").open() end,
+  { desc = "Search lc-help (commands, git aliases, tmux keys, tools)" })
 map("n", "<leader>ft", "<cmd>TodoTelescope<CR>", { desc = "Search TODO/FIXME/HACK comments" })
 
 return {

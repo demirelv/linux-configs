@@ -17,6 +17,7 @@ Icindekiler: temel ayarlar, eklentiler (resurrect/continuum), nvim-tmux gezinti
 | `Prefix` + `Ctrl-v` | Copy mode (vi tuslari: `v` sec, `y` panoya kopyala) |
 | `Prefix` + `P`, sag tik | Sistem panosundan yapistir |
 | `Prefix` + `F1` | `lc-help` popup'i (komut ve kisayol arama) |
+| `Prefix` + `Tab` | Ekrandaki metinden (URL, yol, hash, IP) sec ve kopyala/yaz: `extrakto` eklentisi (python3 + fzf gerekir) |
 | `escape-time` | 10 ms (Neovim'de `Esc` gecikmesin) |
 | Pencere/pane numarasi | 1'den baslar, pencere kapaninca yeniden numaralanir |
 

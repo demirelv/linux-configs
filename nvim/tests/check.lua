@@ -147,7 +147,13 @@ check(desc_of("<C-j>"):lower():find("tmux") ~= nil, "<C-j> tmux gezintisine bagl
 check(vim.fn.maparg("]q", "n") ~= "" and vim.fn.maparg("[q", "n") ~= "", "]q / [q varsayilan quickfix gezintisi duruyor")
 check(desc_of("s"):find("flash") ~= nil, "s: flash")
 check(desc_of("<leader>gn"):find("Neogit") ~= nil, "<leader>gn: Neogit")
-for _, lhs in ipairs({ "<leader>cf", "<leader>u", "<leader>aa", "<leader>fR", "<leader>xx", "<leader>ft", "<leader>db", "<leader>qs", "<leader>mm" }) do
+-- lc-help picker: saf ayristirma islevleri (telescope acmadan)
+local lch = require("cfg.lc_help")
+local pe = lch.parse({ "tool\trg\tShow line numbers\tsrc\trg -n PATTERN", "cmd\ttm [name]\tOpen tmux\tbash", "bad line" })
+check(#pe == 2, "lc_help.parse: 2 gecerli satir, bozuk satir atlanir")
+check(lch.text_of(pe[1]) == "rg -n PATTERN", "lc_help.text_of: ornek varsa ornek")
+check(lch.text_of(pe[2]) == "tm", "lc_help.text_of: komutta yalniz komut adi")
+for _, lhs in ipairs({ "<leader>fl", "<leader>cf", "<leader>u", "<leader>aa", "<leader>fR", "<leader>xx", "<leader>ft", "<leader>db", "<leader>qs", "<leader>mm" }) do
   check(desc_of(lhs) ~= "", lhs .. " tanimli ve aciklamali")
 end
 

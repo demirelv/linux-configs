@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# commit-msg hook: the message must carry an `Issue: KEY-123` line (Gerrit rejects a push without it).
+# Merge, fixup! and squash! messages are skipped (a fixup is squashed into a commit that has the line).
+# Skip once: git commit --no-verify. Install into a repo: lc-issue-hook install
+set -Eeuo pipefail
+
+msg_file="${1:?usage: commit-msg <message-file>}"
+body="$(grep -v '^#' "$msg_file" || true)"
+first="$(printf '%s\n' "$body" | sed -n '1p')"
+
+case "$first" in
+    "Merge "*|"fixup! "*|"squash! "*|"amend! "*) exit 0 ;;
+esac
+
+if printf '%s\n' "$body" | grep -qE '^Issue: [A-Z][A-Z0-9_]*-[0-9]+[[:space:]]*$'; then
+    exit 0
+fi
+
+{
+    echo "commit-msg: no 'Issue: <KEY>' line in the message."
+    echo "  Add it as the last line, e.g.   Issue: PROJ-1234"
+    echo "  (Gerrit rejects a push without it. Skip once: git commit --no-verify)"
+} >&2
+exit 1

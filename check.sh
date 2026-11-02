@@ -18,7 +18,7 @@ fail() { failed=$((failed + 1)); failed_steps+=("$1"); }
 
 step "sozdizimi (bash -n)"
 # -co: henuz commit edilmemis yeni dosyalar da taransin
-mapfile -t files < <(git ls-files -co --exclude-standard -- '*.sh' bash/.bashrc .githooks/pre-commit bin/lc-help)
+mapfile -t files < <(git ls-files -co --exclude-standard -- '*.sh' bash/.bashrc .githooks/pre-commit bin/lc-help bin/lc-doctor bin/lc-issue-hook git/hooks/commit-msg)
 for f in "${files[@]}"; do
     if bash -n "$f"; then echo "ok   $f"; else echo "HATA $f"; fail "bash -n $f"; fi
 done
@@ -40,6 +40,8 @@ bash tests/hook_test.sh || fail "pre-commit kanca testi"
 bash tests/tools_test.sh || fail "arac kurulum testi"
 bash tests/docs_test.sh || fail "dokuman testi"
 bash tests/lc_help_test.sh || fail "lc-help testi"
+bash tests/lc_doctor_test.sh || fail "lc-doctor testi"
+bash tests/commit_msg_test.sh || fail "commit-msg kanca testi"
 
 if [ "$FAST" -eq 0 ]; then
     step "tmux eklenti testi"

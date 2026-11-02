@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# lc-doctor: checks that this machine matches what linux-configs expects, and says how to fix each gap.
+#   lc-doctor        full report
+#   lc-doctor -q     only problems
+#   lc-doctor -h
+# ok = fine, WARN = optional / worth a look, MISS = required part missing (exit status 1).
+# shellcheck disable=SC2088  # ~ in messages is literal text, not a path to expand
+set -Eeuo pipefail
+
+SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
+REPO="$(cd -- "$(dirname -- "$SELF")/.." && pwd)"
+quiet=0
+case "${1:-}" in
+    -q) quiet=1 ;;
+    -h|--help) sed -n '2,7p' "$SELF" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    "") ;;
+    *) echo "lc-doctor: unknown option '$1'" >&2; exit 1 ;;
+esac
+
+miss=0; warn=0
+say() { if [ "$quiet" -eq 0 ]; then printf '%s\n' "$*"; fi; }
+head_() { say ""; say "== $*"; }
+good() { say "ok   $*"; }
+warn() { warn=$((warn + 1)); printf 'WARN %s\n' "$*"; }
+bad() { miss=$((miss + 1)); printf 'MISS %s\n' "$*"; }
+
+# ---- links: the dotfiles are symlinks into this repo, so editing the repo updates the machine ----
+head_ "links"
+check_link() { # <path> <expected target> <fix>
+    local p="$1" want="$2" fix="$3"
+    if [ -L "$p" ] && [ "$(readlink -f -- "$p")" = "$(readlink -f -- "$want")" ]; then good "$p -> repo"
+    elif [ -e "$p" ] || [ -L "$p" ]; then bad "$p exists but is not a link to $want  -> $fix"
+    else bad "$p missing  -> $fix"; fi
+}
+check_link "$HOME/.bashrc" "$REPO/bash/.bashrc" "./install.sh"
+check_link "$HOME/.tmux.conf" "$REPO/tmux/.tmux.conf" "./install.sh"
+check_link "$HOME/.config/nvim/init.lua" "$REPO/nvim/init.lua" "./install.sh"
+check_link "$HOME/.config/nvim/lua" "$REPO/nvim/lua" "./install.sh"
+for b in lc-help lc-doctor lc-issue-hook; do
+    check_link "$HOME/.local/bin/$b" "$REPO/bin/$b" "./install.sh"
+done
+if [ -f "$HOME/.gitconfig" ]; then
+    if cmp -s "$REPO/git/.gitconfig" "$HOME/.gitconfig"; then good "~/.gitconfig equals git/.gitconfig"
+    else warn "~/.gitconfig differs from git/.gitconfig (it is copied, not linked)  -> ./install.sh refreshes it (keeps a backup)"; fi
+else bad "~/.gitconfig missing  -> ./install.sh"; fi
+
+# ---- required programs ----
+head_ "required programs"
+for c in git tmux nvim fzf python3; do
+    if command -v "$c" >/dev/null 2>&1; then good "$c"; else bad "$c not found  -> sudo apt install $c (fzf: see nvim/install.sh)"; fi
+done
+if command -v nvim >/dev/null 2>&1; then
+    ver="$(nvim --version | sed -n '1s/^NVIM v\([0-9]*\)\.\([0-9]*\).*/\1 \2/p')"
+    read -r maj min <<<"${ver:-0 0}"
+    if [ "$maj" -gt 0 ] || [ "$min" -ge 11 ]; then good "nvim $maj.$min (>= 0.11)"; else bad "nvim $maj.$min is older than 0.11  -> nvim/install.sh"; fi
+fi
+if command -v tree-sitter >/dev/null 2>&1; then good "tree-sitter CLI (nvim parsers)"; else warn "tree-sitter CLI not found  -> nvim/install.sh (nvim-treesitter builds parsers with it)"; fi
+
+# ---- tmux plugins, pinned to the commits in install.sh ----
+head_ "tmux plugins"
+for pl in tmux-plugins/tmux-resurrect tmux-plugins/tmux-continuum laktak/extrakto; do
+    name="${pl#*/}"; dir="$HOME/.tmux/plugins/$name"
+    want="$(grep -A1 "$pl" "$REPO/install.sh" | grep -oE '[0-9a-f]{40}' | head -n1 || true)"
+    if [ ! -d "$dir/.git" ]; then warn "$name not installed  -> ./install.sh"
+    elif [ "$(git -C "$dir" rev-parse HEAD)" = "$want" ]; then good "$name at the pinned commit"
+    else warn "$name is not at the pinned commit ${want:0:8}  -> ./install.sh"; fi
+done
+
+# ---- Neovim plugins ----
+head_ "neovim"
+if [ -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ]; then good "lazy.nvim bootstrapped (plugins installed)"
+else warn "plugins not installed yet  -> open nvim once (lazy.nvim installs them)"; fi
+
+# ---- shell environment ----
+head_ "shell environment"
+if [ -f "$HOME/.bashrc.local" ]; then good "~/.bashrc.local (machine-specific settings)"; else warn "~/.bashrc.local missing  -> optional: PATH, nvm, aliases, TP_ROOT go there"; fi
+case ":$PATH:" in *":$HOME/.local/bin:"*) good "~/.local/bin on PATH" ;; *) warn "~/.local/bin is not on PATH  -> add it in ~/.bashrc.local" ;; esac
+if [ -d "$HOME/.cargo/bin" ]; then
+    case ":$PATH:" in *":$HOME/.cargo/bin:"*) good "~/.cargo/bin on PATH" ;; *) warn "~/.cargo/bin exists but is not on PATH  -> open a new shell" ;; esac
+fi
+if [ -f "$HOME/.config/linux-configs/deny-patterns" ]; then good "deny-patterns (secret scan, machine-specific)"
+else warn "no ~/.config/linux-configs/deny-patterns  -> optional: your own secret patterns for the pre-commit scan"; fi
+if [ -d "$REPO/.git" ]; then
+    if [ "$(git -C "$REPO" config core.hooksPath || true)" = ".githooks" ]; then good "pre-commit hook active in this repo"
+    else warn "core.hooksPath is not .githooks in the repo  -> ./install.sh"; fi
+fi
+
+# ---- optional tools (names come from help/tools.tsv; command names may differ from the package) ----
+head_ "optional tools"
+declare -A CMD=(
+    [cppcheck]=cppcheck [clang-tidy]=clang-tidy [clang-format]=clang-format [bear]=bear [git-delta]=delta
+    [fd-find]="fd fdfind" [bat]="bat batcat" [eza]=eza [zoxide]=zoxide [direnv]=direnv [shellcheck]=shellcheck
+    [ltrace]=ltrace [rr]=rr [lcov]=lcov [doxygen]=doxygen [tshark]=tshark [binwalk]=binwalk
+    [qemu-user-static]=qemu-arm-static [tio]=tio [lnav]=lnav [moreutils]=ts [mosh]=mosh [sshfs]=sshfs
+    [tig]=tig [pre-commit]=pre-commit [entr]=entr [hyperfine]=hyperfine [ncdu]=ncdu [duf]=duf [just]=just
+    [tmuxp]=tmuxp [httpie]=http [tldr]=tldr [ripgrep]=rg [git-absorb]=git-absorb [gping]=gping
+    [starship]=starship [atuin]=atuin [mise]=mise [uv]=uv [watchexec]=watchexec [dust]=dust
+    [difftastic]=difft [ast-grep]="ast-grep sg" [procs]=procs [tokei]=tokei [jless]=jless [xh]=xh
+)
+apt_missing=(); extra_missing=(); have=0
+while IFS=$'\t' read -r name _ _ kind; do
+    case "$name" in "#"*|"") continue ;; esac
+    [ "$kind" = usage ] && continue
+    found=0
+    for c in ${CMD[$name]:-$name}; do command -v "$c" >/dev/null 2>&1 && found=1; done
+    if [ "$found" -eq 1 ]; then have=$((have + 1))
+    elif [ "$kind" = extra ]; then extra_missing+=("$name")
+    else apt_missing+=("$name"); fi
+done < "$REPO/help/tools.tsv"
+good "$have tools installed"
+if [ ${#apt_missing[@]} -gt 0 ]; then warn "apt tools missing (${#apt_missing[@]}): ${apt_missing[*]}  -> tools/install-tools.sh all"; fi
+if [ ${#extra_missing[@]} -gt 0 ]; then warn "apt-less tools missing (${#extra_missing[@]}): ${extra_missing[*]}  -> docs/araclar.md (cargo install --locked ...)"; fi
+
+echo
+echo "lc-doctor: $miss missing, $warn warnings"
+[ "$miss" -eq 0 ]

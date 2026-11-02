@@ -34,5 +34,7 @@ oturumlarina dokunmaz. `shellcheck` kurulu degilse o adim uyarip atlanir (`sudo 
 | `tests/tools_test.sh` | `tools/install-tools.sh` (sahte apt ile: atlama, kurulu olani kurmama, `fd`/`bat` baglari, delta) |
 | `tests/docs_test.sh` | Dokuman baglantilari, INDEX tamligi, kisayol/arac listelerinin koddan sapmasi |
 | `tests/lc_help_test.sh` | `lc-help` indeksi kaynaklarla uyumlu mu, arama, bayat indeks, `fzf` yolu (pty) |
+| `tests/lc_doctor_test.sh` | `lc-doctor`: bos HOME'da MISS, baglar kurulunca temiz, yanlis hedefli bag, arac tablosu `tools.tsv` ile tam |
+| `tests/commit_msg_test.sh` | `commit-msg` kancasi ve `lc-issue-hook` (gercek `git commit` ile, baska hook'a dokunmaz) |
 | `tests/tmux_plugins_test.sh` | tmux config, resurrect/continuum, nvim-tmux gezinti (ag gerekir) |
 | `nvim/tests/run.sh` | Taze kurulumda Neovim: tus cakismasi, eklentiler, LSP, biçimlendirme, `:Make`, treesitter (ag gerekir) |
