@@ -40,7 +40,7 @@ ok "tmux.conf'taki her bind-key -N notu tasiyor${nonote:+ (notsuz: $nonote)}" te
 
 # 4) help/tools.tsv ile install-tools.sh paket listeleri ayni
 pk="$(grep -E '^\s+\[[a-z0-9-]+\]="' "$REPO/tools/install-tools.sh" | sed -E 's/^[^"]*"//; s/".*$//' | tr ' ' '\n' | sort -u)"
-tl="$(awk -F'\t' '!/^#/ && NF >= 2 && $4 != "extra" { print $1 }' "$REPO/help/tools.tsv" | sort -u)"
+tl="$(awk -F'\t' '!/^#/ && NF >= 2 && $4 != "extra" && $4 != "usage" { print $1 }' "$REPO/help/tools.tsv" | sort -u)"
 ok "help/tools.tsv ile install-tools.sh ayni paketleri listeler" test "$pk" = "$tl"
 
 # 5) Ingilizce-only: ASCII disi karakter ve Turkce ASCII kelimeler yok
@@ -54,8 +54,10 @@ ok "buyuk/kucuk harf duyarsiz" has "$("$L" TMJ)" "tmj"
 ok "tur filtresi: tmux reload -> Prefix r" has "$("$L" tmux reload)" "Prefix r"
 ok "tur filtresi yalniz o turu verir" not bash -c '"$1" tmux | grep -q "^cmd"' _ "$L"
 ok "-k yalniz tmux ve nvim verir" not bash -c '"$1" -k | grep -qE "^(cmd|tool|env)"' _ "$L"
-ok "birden cok kelime hepsi eslesmeli" test "$("$L" tool serial | wc -l)" -eq 1
+ok "birden cok kelime hepsi eslesmeli" test "$("$L" tool serial reconnect | wc -l)" -eq 1
 ok "apt-disi (extra) arac de bulunur" has "$("$L" tool starship)" "starship"
+ok "usage satirlari: her birinde ornek komut var" test -z "$(awk -F'\t' '$4 == "usage" && $3 == "" { print $1 }' "$REPO/help/tools.tsv")"
+ok "usage ornegi aranabilir: rg -t" has "$("$L" tool rg type)" "Only one file type"
 ok "extra arac kaynagi docs/araclar.md" grep -qP "^tool\tstarship\t.*\tdocs/araclar.md" "$LC_HELP_CACHE/index.tsv"
 ok "--list tum turleri sayar" has "$("$L" --list)" "tmux"
 ok "eslesme yoksa cikis kodu 1" not "$L" zzzz-hic-yok

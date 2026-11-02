@@ -1,5 +1,6 @@
 # name<TAB>description<TAB>example (optional)<TAB>extra (optional). A row without the 4th column is an apt package of
-# tools/install-tools.sh (tests keep both in sync); an 'extra' row is not in apt, install per docs/araclar.md.
+# tools/install-tools.sh (tests keep both in sync); an 'extra' row is not in apt, install per docs/araclar.md;
+# a 'usage' row is one ready-to-run example of a tool (key = the command, no package).
 cppcheck	Static analysis for C/C++, needs no build	cppcheck --enable=warning,performance --inline-suppr .
 clang-tidy	Compiler-based C/C++ analysis (needs compile_commands.json)	clang-tidy -p . src/main.c
 clang-format	C/C++ code formatter (Neovim <leader>cf)	clang-format -i src/main.c
@@ -48,3 +49,69 @@ procs	ps replacement: colour, tree, search	procs --tree	extra
 tokei	Count lines of code per language	tokei src	extra
 jless	Read JSON in a terminal with folding and search	curl -s URL | jless	extra
 xh	Fast httpie-like HTTP client	xh get example.com	extra
+rg	Show line numbers	rg -n PATTERN	usage
+rg	Only one file type (c, py, ...)	rg -t c PATTERN	usage
+rg	Only files matching a glob	rg -g '*.h' PATTERN	usage
+rg	List matching files only	rg -l PATTERN	usage
+fd	Find by extension	fd -e c	usage
+fd	Include hidden and ignored files	fd -H -I NAME	usage
+fd	Run a command on every match	fd -e c -x wc -l {}	usage
+bat	Show only a line range	bat -r 10:40 FILE	usage
+bat	Force a language for highlighting	bat -l json FILE	usage
+bat	Plain output without decorations	bat -p FILE	usage
+eza	Long list with git status	eza -l --git	usage
+eza	Newest files last	eza -l --sort=modified	usage
+eza	Tree, two levels	eza --tree -L 2	usage
+z	Jump to a frequent directory	z NAME	usage
+zi	Pick a frequent directory interactively	zi	usage
+zoxide	List known directories by score	zoxide query -ls	usage
+delta	Side by side diff	git -c delta.side-by-side=true diff	usage
+tig	Blame a file	tig blame FILE	usage
+tig	Status view (stage lines)	tig status	usage
+entr	Re-run on save (clear screen)	ls *.c | entr -c make test	usage
+entr	Restart a long-running program on change	fd -e c | entr -r ./server	usage
+hyperfine	Benchmark with warm-up	hyperfine -w 3 'make -j8'	usage
+hyperfine	Compare two commands	hyperfine 'cmd A' 'cmd B'	usage
+ncdu	Disk usage, stay on one filesystem	ncdu -x /	usage
+duf	Free space per mount	duf	usage
+just	List recipes	just --list	usage
+just	Run a recipe	just RECIPE	usage
+tmuxp	Start a saved layout	tmuxp load layout.yaml	usage
+tmuxp	Save a running session to YAML	tmuxp freeze SESSION	usage
+http	GET request	http GET URL	usage
+http	POST a JSON body	http POST URL key=value	usage
+tldr	Short examples for a command	tldr tar	usage
+lnav	Merge several logs by timestamp	lnav a.log b.log	usage
+tio	Open a serial console	tio -b 115200 /dev/ttyUSB0	usage
+mosh	Roaming remote shell	mosh USER@HOST	usage
+sshfs	Mount a remote directory	sshfs HOST:/path ~/mnt	usage
+fusermount	Unmount an sshfs mount	fusermount -u ~/mnt	usage
+tshark	Read a capture with a display filter	tshark -r x.pcap -Y dns	usage
+tshark	Live capture with a capture filter	tshark -i eth0 -f 'port 53'	usage
+binwalk	Scan an image for known parts	binwalk firmware.bin	usage
+binwalk	Extract what was found	binwalk -e firmware.bin	usage
+git absorb	Fold staged changes into the right commits	git absorb --and-rebase	usage
+gping	Ping several hosts in one graph	gping HOST1 HOST2	usage
+atuin	Search history from the current directory	atuin search --cwd . WORD	usage
+atuin	Usage statistics	atuin stats	usage
+starship	Explain what each prompt part shows	starship explain	usage
+starship	Open the config file in the editor	starship config	usage
+mise	List installed tool versions	mise ls	usage
+mise	Pin a version in the current directory	mise use node@22	usage
+uv	Create a virtual environment	uv venv	usage
+uv	Install into it	uv pip install PACKAGE	usage
+uv	Run a script	uv run script.py	usage
+watchexec	Run on changes of selected extensions	watchexec -e c,h -- make test	usage
+watchexec	Restart a server on change	watchexec -r -- ./server	usage
+dust	Two levels, largest first	dust -d 2	usage
+dust	Top ten entries	dust -n 10	usage
+difft	Compare two files by syntax	difft a.c b.c	usage
+difft	Use it for git diff	GIT_EXTERNAL_DIFF=difft git diff	usage
+ast-grep	Find calls by pattern	ast-grep run -p 'foo($A)' -l c	usage
+ast-grep	Rewrite matches	ast-grep run -p 'foo($A)' -r 'bar($A)' -l c	usage
+procs	Search processes by name	procs NAME	usage
+procs	Process tree	procs --tree	usage
+tokei	Lines per language	tokei	usage
+tokei	Sorted by lines	tokei -s lines	usage
+jless	View a JSON file	jless FILE.json	usage
+xh	POST with form fields	xh post URL a=b	usage

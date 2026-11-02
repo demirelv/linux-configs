@@ -37,7 +37,7 @@ Hicbir sey iki kez yazilmaz; indeks su kaynaklardan uretilir ve kaynak degisince
 | `cmd`, `env` | `bash/.bashrc` icindeki `# help: kullanim -- aciklama` ve `# help-env: DEGISKEN -- aciklama` satirlari |
 | `tmux` | `tmux/.tmux.conf` icindeki her `bind-key -N "aciklama"` notu (tmux'un varsayilan notlari da dahil) |
 | `nvim` | Her Neovim kisayolunun `desc` alani |
-| `tool` | `help/tools.tsv` |
+| `tool` | `help/tools.tsv`: arac satirlari (apt paketi ya da 4. sutunu `extra` olan apt-disi arac) ve `usage` satirlari (komut basina hazir ornek: `lc-help tool rg type`, `lc-help tool atuin`) |
 
 ## Yeni girdi ekleme
 
