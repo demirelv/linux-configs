@@ -39,6 +39,14 @@ ok "gitconfig ayniysa uyari yok" not has "$out" "~/.gitconfig differs"
 echo "# fark" >> "$HOME/.gitconfig"
 ok "gitconfig farkliysa uyarir" has "$(run)" "~/.gitconfig differs"
 
+# /tmp'e giden ~/.fzf.bash yakalanir
+printf 'PATH="$PATH:/tmp/tmp.x/data/nvim/lazy/fzf/bin"\n' > "$HOME/.fzf.bash"
+ok "~/.fzf.bash olmayan dizine isaret ediyorsa MISS" has "$(run)" "MISS ~/.fzf.bash points to a missing directory"
+mkdir -p "$HOME/.fzf/bin"
+printf 'PATH="$PATH:%s/.fzf/bin"\n' "$HOME" > "$HOME/.fzf.bash"
+ok "~/.fzf.bash saglamsa uyari yok" not has "$(run)" "points to a missing directory"
+rm -f "$HOME/.fzf.bash"
+
 # yanlis hedefe giden bag yakalanir
 rm "$HOME/.tmux.conf"; ln -s "$REPO/README.md" "$HOME/.tmux.conf"
 ok "yanlis hedefli bag MISS" has "$(run)" "$HOME/.tmux.conf exists but is not a link"

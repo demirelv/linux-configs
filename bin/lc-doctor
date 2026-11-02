@@ -66,6 +66,15 @@ for pl in tmux-plugins/tmux-resurrect tmux-plugins/tmux-continuum laktak/extrakt
     else warn "$name is not at the pinned commit ${want:0:8}  -> ./install.sh"; fi
 done
 
+# ---- fzf shell integration: a ~/.fzf.bash that points to a directory that is gone (e.g. a temp dir left by a
+# test run) breaks fzf in every new shell ----
+if [ -f "$HOME/.fzf.bash" ]; then
+    gone=""
+    while IFS= read -r d; do [ -d "$d" ] || gone="$gone $d"; done < <(grep -v '^[[:space:]]*#' "$HOME/.fzf.bash" | grep -oE '/[^" ]+/bin' | sort -u)
+    if [ -n "$gone" ]; then bad "~/.fzf.bash points to a missing directory:$gone  -> ~/.fzf/install --all --no-update-rc"
+    else good "~/.fzf.bash"; fi
+fi
+
 # ---- Neovim plugins ----
 head_ "neovim"
 if [ -d "$HOME/.local/share/nvim/lazy/lazy.nvim" ]; then good "lazy.nvim bootstrapped (plugins installed)"

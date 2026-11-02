@@ -10,6 +10,10 @@ tmp="$(mktemp -d)"
 # Temizlik hatasi (kapanan sureclerle yaris) testin sonucunu bozmasin
 trap 'rm -rf -- "${tmp:?}" 2>/dev/null || true' EXIT
 
+# HOME de gecici olmali: bazi eklentilerin kurulum adimi $HOME'a yazar (fzf eklentisi ~/.fzf.bash'i gecici
+# yolla yeniden yazip gercek kabugu bozmustu). Git ayari (proxy, CA) gercek HOME'dan okunmaya devam eder.
+[ -f "$HOME/.gitconfig" ] && export GIT_CONFIG_GLOBAL="$HOME/.gitconfig"
+mkdir -p "$tmp/home"; export HOME="$tmp/home"
 export XDG_CONFIG_HOME="$tmp/config" XDG_DATA_HOME="$tmp/data" \
        XDG_STATE_HOME="$tmp/state" XDG_CACHE_HOME="$tmp/cache"
 mkdir -p "$XDG_CONFIG_HOME/nvim"
