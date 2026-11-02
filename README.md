@@ -62,7 +62,7 @@ tools/install-tools.sh all                      # tum gruplar
 | `git` | varsayilan: tig, pre-commit |
 | `misc` | entr, hyperfine, ncdu, duf, just, tmuxp, httpie, tldr |
 | `dev` | ripgrep, git-absorb, gping |
-| `extra` | apt'te olmayanlar: `cargo install --locked` (surum sabitli, derleme dakikalar surer) ve `uv` (pipx). starship, atuin, watchexec, dust, difftastic, ast-grep, procs, tokei, xh |
+| `extra` | apt'te olmayanlar: `cargo install --locked` (surum sabitli, derleme dakikalar surer) ve `uv` (pipx). starship, atuin, watchexec, dust, difftastic, ast-grep, procs, tokei, xh; ayrica `vtop` GitHub'dan klonlanip derlenir (`~/.local/bin`) |
 | `all` | hepsi |
 
 Not: `mise` icin rustc 1.95 gerekir, elle kurulur ([docs/araclar.md](docs/araclar.md)). Her aracin ne ise yaradigi ve

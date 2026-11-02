@@ -93,6 +93,16 @@ cat > "$bin/pipx" <<'EOS'
 printf 'pipx %s\n' "$*" >> "$STUB_LOG"
 EOS
 chmod +x "$bin/cargo" "$bin/pipx"
+
+# vtop kaynaktan kurulur (git clone + make install): ag yok, sahte yerel git deposu ve sabit commit
+vsrc="$tmp/vtop-src"; mkdir -p "$vsrc"
+printf '#!/bin/sh\necho vtop-fixture\n' > "$vsrc/vtop.sh"
+printf 'PREFIX ?= /usr/local\nall: ;\ninstall:\n\tinstall -D -m 755 vtop.sh $(DESTDIR)$(PREFIX)/bin/vtop\n' > "$vsrc/Makefile"
+git -C "$vsrc" init -q -b main
+git -C "$vsrc" add -A
+git -C "$vsrc" -c user.name=t -c user.email=t@t commit -q -m fixture
+vref="$(git -C "$vsrc" rev-parse HEAD)"
+export TOOLS_VTOP_URL="$vsrc" TOOLS_VTOP_REF="$vref"
 printf '#!/bin/sh\n' > "$bin/starship"; chmod +x "$bin/starship"   # zaten kurulu sayilir
 : > "$STUB_LOG"
 out="$(run extra || true)"
@@ -105,6 +115,24 @@ ok "extra: basarisiz arac raporlanir" has "$out" "kurulamayan extra araclar: tok
 ok "extra: dry-run cargo cagirmaz" test "$(: > "$STUB_LOG"; run --dry-run extra >/dev/null; wc -c < "$STUB_LOG")" -eq 0
 ok "all extra'yi de icerir" has "$(run --dry-run all)" "cargo/pipx"
 ok "extra yokken varsayilan cargo/pipx satiri yok" not has "$(run --dry-run)" "cargo/pipx"
+
+# vtop: ~/.local/bin altina, sudo'suz; sistemdeki eski /usr/bin/vtop sayilmaz; sabit commit disinda kurulmaz
+ok "vtop: onceki extra calismalari ~/.local/bin/vtop kurdu" test -x "$HOME/.local/bin/vtop"
+rm -f "$HOME/.local/bin/vtop"
+ok "vtop: extra dry-run kaynaktan kurulacagini soyler" has "$(run --dry-run extra)" "kaynaktan    : vtop@"
+run extra >/dev/null 2>&1 || true
+ok "vtop: extra ~/.local/bin/vtop kurar" test -x "$HOME/.local/bin/vtop"
+ok "vtop: kurulan arac calisir" test "$("$HOME/.local/bin/vtop")" = "vtop-fixture"
+ok "vtop: kurulu iken tekrar kurulmaz" not has "$(run extra || true)" "==> vtop"
+ok "vtop: kurulu iken dry-run kaynaktan satiri bos" has "$(run --dry-run extra)" "kaynaktan    : yok"
+rm -f "$HOME/.local/bin/vtop"
+out="$(TOOLS_VTOP_REF=0000000000000000000000000000000000000000 run extra || true)"
+ok "vtop: yanlis commit kurulmaz ve raporlanir" has "$out" "kurulamayan extra araclar: tokei vtop"
+ok "vtop: yanlis commit sonrasi dosya yok" test ! -e "$HOME/.local/bin/vtop"
+out="$(TOOLS_VTOP_URL="$tmp/yok" run extra || true)"
+ok "vtop: klon basarisizsa digerleri durmaz, vtop raporlanir" has "$out" "kurulamayan extra araclar: tokei vtop"
+run extra >/dev/null 2>&1 || true
+ok "vtop: sonraki calistirma kurar" test -x "$HOME/.local/bin/vtop"
 
 # atuin ilk kurulum: bash gecmisi bir kez iceri alinir, yukari ok tum gecmisi arar (idempotent)
 printf '#!/bin/sh\nprintf "atuin %%s\\n" "$*" >> "$STUB_LOG"\n' > "$bin/atuin"; chmod +x "$bin/atuin"

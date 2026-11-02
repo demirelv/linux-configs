@@ -5,7 +5,8 @@
 # Gruplar: core c-debug net git misc dev extra   (icerikleri ve ne ise yaradiklari: docs/araclar.md)
 #
 # - `extra` grubu apt'te olmayan araclari cargo ile kurar (surum sabitli, --locked; derleme dakikalar surer) ve
-#   uv'yi pipx ile; `all` bunu da icerir. cargo/pipx yoksa onlari apt ile kurar.
+#   uv'yi pipx ile; `all` bunu da icerir. vtop crates.io'da degil: GitHub'dan klonlanir, sabit commit'te derlenir,
+#   ~/.local/bin'e kurulur (SOURCE_TOOLS). cargo/pipx yoksa onlari apt ile kurar.
 # - apt'te olmayan paketi atlar (Ubuntu surumune gore degisir), zaten kurulu olani tekrar kurmaz.
 # - Ubuntu'nun fdfind/batcat adlarini ~/.local/bin altinda fd/bat olarak baglar.
 # - delta kuruluysa Git'e baglar (~/.gitconfig.delta + include); kurulu degilse git'e dokunmaz.
@@ -41,6 +42,12 @@ EXTRA_TOOLS=(
     "tokei|tokei|15.0.0"
     "xh|xh|0.26.3"
 )
+# Kaynaktan kurulanlar: komut|git adresi|commit (sabit; --locked'in karsiligi). `git clone` + `make install PREFIX=~/.local`,
+# sudo yok. Komut yalniz ~/.local/bin altinda aranir: /usr/bin/vtop gibi eski bir kopya kurulumu engellemez.
+# Testler adresi/commit'i TOOLS_VTOP_URL / TOOLS_VTOP_REF ile degistirir (ag yok).
+SOURCE_TOOLS=(
+    "vtop|${TOOLS_VTOP_URL:-https://github.com/demirelv/vtop.git}|${TOOLS_VTOP_REF:-de41a7807fd0aafd2f409c5a4885de3767bb4527}"
+)
 want_extra=0
 
 dry=0
@@ -70,13 +77,21 @@ for g in "${groups[@]}"; do
 done
 
 # extra grubu cargo ve pipx ister: yoksa apt ile kurulur
-extra_todo=(); extra_have=()
+extra_todo=(); extra_have=(); src_todo=()
 if [ "$want_extra" -eq 1 ]; then
     for e in "${EXTRA_TOOLS[@]}"; do
         IFS='|' read -r cmd _ _ <<<"$e"
         if command -v "$cmd" >/dev/null 2>&1 || [ -x "$HOME/.cargo/bin/$cmd" ]; then extra_have+=("$cmd"); else extra_todo+=("$e"); fi
     done
     if command -v uv >/dev/null 2>&1 || [ -x "$HOME/.local/bin/uv" ]; then extra_have+=(uv); else extra_todo+=("uv|uv|pipx"); fi
+    for e in "${SOURCE_TOOLS[@]}"; do
+        IFS='|' read -r cmd _ _ <<<"$e"
+        if [ -x "$HOME/.local/bin/$cmd" ]; then extra_have+=("$cmd"); else src_todo+=("$e"); fi
+    done
+    if [ ${#src_todo[@]} -gt 0 ]; then
+        command -v git >/dev/null 2>&1 || to_install+=(git)
+        command -v make >/dev/null 2>&1 && command -v cc >/dev/null 2>&1 || to_install+=(build-essential)
+    fi
     if [ ${#extra_todo[@]} -gt 0 ]; then
         command -v cargo >/dev/null 2>&1 || dpkg -s cargo >/dev/null 2>&1 || to_install+=(cargo)
         command -v pipx >/dev/null 2>&1 || dpkg -s pipx >/dev/null 2>&1 || to_install+=(pipx)
@@ -90,6 +105,8 @@ echo "  kurulacak    : ${to_install[*]:-yok}"
 echo "  apt'te yok   : ${missing[*]:-yok}"
 if [ "$want_extra" -eq 1 ]; then
     echo "  cargo/pipx   : $(for e in "${extra_todo[@]}"; do IFS='|' read -r _ crate ver <<<"$e"; printf '%s@%s ' "$crate" "$ver"; done)"
+    src_label="$(for e in "${src_todo[@]}"; do IFS='|' read -r cmd _ ref <<<"$e"; printf '%s@%s ' "$cmd" "${ref:0:7}"; done)"
+    echo "  kaynaktan    : ${src_label:-yok}"
     echo "  extra kurulu : ${extra_have[*]:-yok}"
 fi
 
@@ -112,6 +129,21 @@ if [ "$want_extra" -eq 1 ]; then
         else
             cargo install --locked "$crate" --version "$ver" || extra_failed+=("$cmd")
         fi
+    done
+    for e in "${src_todo[@]}"; do
+        IFS='|' read -r cmd url ref <<<"$e"
+        echo "==> $cmd (kaynaktan ${ref:0:7})"
+        # alt kabuk: gecici dizin hata olsa da silinir. `|| ...` baglaminda set -e calismaz: her adim && ile zincirli;
+        # klon sabit commit'e alinmazsa kurulmaz
+        (
+            work="$(mktemp -d)" || exit 1
+            trap 'rm -rf -- "${work:?}"' EXIT
+            git clone -q -- "$url" "$work/src" \
+                && git -C "$work/src" checkout -q "$ref" \
+                && [ "$(git -C "$work/src" rev-parse HEAD)" = "$ref" ] \
+                && make -C "$work/src" \
+                && make -C "$work/src" install PREFIX="$HOME/.local"
+        ) || extra_failed+=("$cmd")
     done
     if [ ${#extra_failed[@]} -gt 0 ]; then echo "UYARI: kurulamayan extra araclar: ${extra_failed[*]}" >&2; fi
 fi

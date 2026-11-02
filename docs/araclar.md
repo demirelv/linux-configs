@@ -116,6 +116,10 @@ Her biri `lc-help tool <ad>` ile aranabilir. Hepsi kuruluysa `.bashrc` kendiligi
 | `procs` | `ps` yerine: renk, agac, arama | `cargo install --locked procs --version 0.14.12` |
 | `tokei` | Dile gore kod satiri sayar | `cargo install --locked tokei --version 15.0.0` |
 | `xh` | Hizli httpie benzeri HTTP istemcisi | `cargo install --locked xh --version 0.26.3` |
+| `vtop` | `top` benzeri surec izleyici (C, kendi yazimim): ayni programi gruplar, PSI, disk G/C | kaynaktan: `git clone https://github.com/demirelv/vtop` + `make install PREFIX=~/.local` (commit `de41a78` sabit) |
+
+`vtop` crates.io'da degil: `install-tools.sh extra` GitHub'dan klonlar, sabit commit'e alir, derler ve `~/.local/bin/vtop`'a kurar
+(sudo yok; `/usr/bin/vtop` gibi eski bir kopya kurulumu engellemez, yeni kopya PATH'te onde gelir).
 
 Kurmadan once crate'in sahibine ve son surum tarihine bak (supply-chain). `jless` kurulmuyor (derlemek icin `libxcb-*-dev` paketleri gerekir). `glow` ve `jira-cli` Go ile yazili;
 bilerek eklenmedi.
