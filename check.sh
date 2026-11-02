@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tek komutla tum kontroller: sozdizimi, shellcheck, kabuk, tmux eklenti ve nvim testleri.
+# Tek komutla tum kontroller: sozdizimi, shellcheck, kabuk/kanca/arac/dokuman, tmux eklenti ve nvim testleri.
 # Kullanim:
 #   ./check.sh          # hepsi (nvim testi eklentileri indirir, ag gerekir)
 #   ./check.sh --fast   # ag gerektiren testleri (tmux eklentileri, nvim) atla
@@ -37,6 +37,8 @@ fi
 step "kabuk testleri"
 bash tests/shell_test.sh || fail "kabuk testleri"
 bash tests/hook_test.sh || fail "pre-commit kanca testi"
+bash tests/tools_test.sh || fail "arac kurulum testi"
+bash tests/docs_test.sh || fail "dokuman testi"
 
 if [ "$FAST" -eq 0 ]; then
     step "tmux eklenti testi"

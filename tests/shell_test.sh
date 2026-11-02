@@ -171,5 +171,41 @@ okc "tmuxt: aygit yoksa /dev/ttyUSB0'a duser" has "$(cat "$LOG")" "/dev/ttyUSB0"
 : > "$LOG"; TMUXT_SERIAL=/dev/ttyACM7 TMUXT_SERIAL_DIR="$tmp/serial" rcrun "$stub; tmuxt ABC-1" >/dev/null || true
 okc "tmuxt: TMUXT_SERIAL otomatik bulmayi gecersiz kilar" has "$(cat "$LOG")" "/dev/ttyACM7"
 
+# ---- yardim: docs/*.md terminalde ----
+expected_topics="$(cd "$REPO/docs" && for f in *.md; do [ "$f" = INDEX.md ] || echo "${f%.md}"; done | sort | tr '\n' ' ')"
+okc "yardim -l: konular docs sayfalariyla ayni (INDEX haric)" test "$(rcrun 'yardim -l' | grep -E '^[a-z-]+$' | sort | tr '\n' ' ')" = "$expected_topics"
+okc "yardim: konu verilmezse ozet karti" has "$(rcrun 'yardim')" "ozet karti"
+okc "yardim kabuk: tmw anlatilmis" has "$(rcrun 'yardim kabuk')" "tmw"
+okc "yardim bilinmeyen konuda hata verir" test "$(rcrun 'yardim yok-boyle-bir-konu >/dev/null 2>&1; echo "rc=$?"' | grep -o 'rc=.*')" = "rc=1"
+okc "yardim bilinmeyen konuda konulari soyler" has "$(HOME="$fh2" bash -ic 'yardim yok 2>&1' 2>/dev/null)" "Konular:"
+okc "yardim ara: kelimeyi docs icinde bulur" has "$(rcrun 'yardim ara tmuxp')" "araclar.md"
+okc "yardim ara: kelime verilmezse hata" test "$(rcrun 'yardim ara >/dev/null 2>&1; echo "rc=$?"' | grep -o 'rc=.*')" = "rc=1"
+sed -n '/^_yardim_complete() {/,/^}/p' "$REPO/bash/.bashrc" > "$tmp/yc.bash"
+okc "yardim Tab: 'ka' -> kabuk" test "$(HOME="$fh2" bash -ic 'source "$1"; COMP_WORDS=(yardim ka); COMP_CWORD=1; COMPREPLY=(); _yardim_complete; echo "R=${COMPREPLY[*]}"' _ "$tmp/yc.bash" 2>/dev/null | grep -o 'R=.*')" = "R=kabuk"
+
+# ---- istege bagli araclar: kuruluysa etkinlesir (PATH ~/.bashrc.local'dan gelir), yoksa sessiz ----
+mkdir -p "$fh2/.local/bin"
+printf '#!/bin/sh\n[ "$1" = init ] && echo "export ZOXIDE_STUB=1"\n' > "$fh2/.local/bin/zoxide"
+printf '#!/bin/sh\n[ "$1" = hook ] && echo "export DIRENV_STUB=1"\n' > "$fh2/.local/bin/direnv"
+for t in fd bat eza; do printf '#!/bin/sh\n' > "$fh2/.local/bin/$t"; done
+chmod +x "$fh2/.local/bin"/*
+echo 'export PATH="$HOME/.local/bin:$PATH"' > "$fh2/.bashrc.local"
+integ="$(HOME="$fh2" bash -ic 'echo "Z=${ZOXIDE_STUB:-} D=${DIRENV_STUB:-} F=${FZF_DEFAULT_COMMAND:-} B=${FZF_CTRL_T_OPTS:-} L=$(alias lt 2>/dev/null)"' 2>/dev/null | grep -o 'Z=.*')"
+okc "zoxide kuruluysa baslatilir (PATH .bashrc.local'dan)" has "$integ" "Z=1"
+okc "direnv kuruluysa baglanir" has "$integ" "D=1"
+okc "fd varsa fzf dosya listesi fd ile" has "$integ" "F=fd --type f"
+okc "bat varsa Ctrl-T onizlemesi bat ile" has "$integ" "bat --color=always"
+okc "eza varsa lt takma adi" has "$integ" "eza --tree"
+rm -f "$fh2/.bashrc.local"; rm -rf "$fh2/.local"
+
+# araclar hic yokken .bashrc hatasiz acilir (sistemde bunlar kuruluysa test anlamsiz: atla)
+fh3="$tmp/fh3"; mkdir -p "$fh3"; ln -s "$REPO/bash/.bashrc" "$fh3/.bashrc"
+if PATH=/usr/bin:/bin bash -c 'command -v zoxide direnv fd bat eza >/dev/null 2>&1'; then
+    echo "SKIP arac-yok testi (sistem yollarinda zoxide/direnv/fd/bat/eza var)"
+else
+    err="$(HOME="$fh3" PATH=/usr/bin:/bin bash -ic 'true' 2>&1 >/dev/null | grep -iE 'not found|No such file|command' || true)"
+    okc "araclar yokken .bashrc sessiz acilir${err:+ ($err)}" test -z "$err"
+fi
+
 echo
 if [ "$failed" -eq 0 ]; then echo "TUMU GECTI"; else echo "$failed KONTROL BASARISIZ"; exit 1; fi
