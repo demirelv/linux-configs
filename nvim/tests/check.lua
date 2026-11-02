@@ -14,17 +14,18 @@ check(not msgs:find("E%d+:") and not msgs:find("Error"), "baslangic mesajlarinda
 -- 2. Tus kisayollari: on ek cakismasi ve desc
 -- Calisma zamaninin kendi varsayilanlari (gc, grr, % ...) da hesaba katilir, ama desc yalniz bizim
 -- kisayollarimizdan (sid = init.lua) beklenir.
-local init_sid
-for _, i in ipairs(vim.fn.getscriptinfo({ name = "init.lua" })) do
-  if i.name:find("nvim/init.lua", 1, true) then init_sid = i.sid end
+local mine_sids = {}
+local cfg_dir = vim.fn.stdpath("config")
+for _, i in ipairs(vim.fn.getscriptinfo()) do
+  if i.name:find(cfg_dir, 1, true) == 1 then mine_sids[i.sid] = true end
 end
-check(init_sid ~= nil, "init.lua script id bulundu")
+check(next(mine_sids) ~= nil, "config dizinindeki script id'leri bulundu")
 
 local function all_maps(mode)
   local out = {}
   for _, m in ipairs(vim.api.nvim_get_keymap(mode)) do
     if not m.lhs:find("^<Plug>") and not m.lhs:find("^<SNR>") then
-      out[#out + 1] = { raw = m.lhsraw or m.lhs, lhs = m.lhs, desc = m.desc, mine = (m.sid == init_sid) }
+      out[#out + 1] = { raw = m.lhsraw or m.lhs, lhs = m.lhs, desc = m.desc, mine = mine_sids[m.sid] == true }
     end
   end
   return out
@@ -51,7 +52,7 @@ for _, mode in ipairs({ "n", "x", "i" }) do
       if not m.desc or m.desc == "" then nodesc[#nodesc + 1] = m.lhs end
     end
   end
-  check(count > 0, "mod " .. mode .. ": init.lua kisayollari bulundu (" .. count .. ")")
+  check(count > 0, "mod " .. mode .. ": config kisayollari bulundu (" .. count .. ")")
   check(#nodesc == 0, "mod " .. mode .. ": tum kisayollarin desc'i var " .. table.concat(nodesc, ", "))
 end
 
@@ -81,6 +82,13 @@ if vim.fn.executable("clangd") == 1 then
   vim.cmd("edit " .. dir .. "/main.c")
   local attached = vim.wait(15000, function() return #vim.lsp.get_clients({ bufnr = 0, name = "clangd" }) > 0 end, 200)
   check(attached, "clangd C dosyasina baglandi")
+  check(vim.lsp.inlay_hint.is_enabled(), "inlay hint acik")
+
+  -- conform: clang-format kuruluysa o, degilse clangd (lsp_format = fallback) bicimlendirir
+  vim.api.nvim_buf_set_lines(0, 0, -1, false, { "int main( ){return 0;}" })
+  local formatted = require("conform").format({ async = false, lsp_format = "fallback", timeout_ms = 10000 })
+  local text = table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n")
+  check(formatted and text:find("int main() {", 1, true) ~= nil, "conform: C kodu bicimlendirildi (" .. text:gsub("\n", " | ") .. ")")
   vim.cmd("bwipeout!")
 else
   io.stdout:write("SKIP clangd baglanti testi (clangd yok)\n")
@@ -119,6 +127,67 @@ if ok_t and fw.callback then
   check(prompt_after("viw") == "hello", "<leader>fw: secim (viw -> hello)")
   check(prompt_after("vee") == "hello world", "<leader>fw: coklu kelime secimi")
 end
+
+-- 9. Ek ayarlar (lua/cfg/options.lua)
+check(vim.o.undofile and vim.o.splitright and vim.o.splitbelow and vim.o.cursorline, "undofile/splitright/splitbelow/cursorline acik")
+check(vim.o.scrolloff == 8 and vim.o.inccommand == "split", "scrolloff=8, inccommand=split")
+check(vim.o.exrc, "exrc acik (.nvim.lua icin :trust gerekir)")
+check(vim.opt.listchars:get().trail ~= nil, "listchars trail tanimli")
+
+-- 10. Ek eklentiler yuklenir, komutlari ve kisayollari var
+for _, mod in ipairs({ "conform", "flash", "harpoon", "grug-far", "trouble", "todo-comments", "persistence", "lualine", "dap" }) do
+  local ok, err = pcall(require, mod)
+  check(ok, "require(" .. mod .. ")" .. (ok and "" or (": " .. tostring(err):sub(1, 80))))
+end
+for _, cmd in ipairs({ "UndotreeToggle", "TmuxNavigateLeft", "GrugFar", "Trouble", "TodoTelescope", "Neogit", "Make" }) do
+  check(vim.fn.exists(":" .. cmd) == 2, ":" .. cmd .. " komutu var")
+end
+local function desc_of(lhs, mode) return vim.fn.maparg(lhs, mode or "n", false, true).desc or "" end
+check(desc_of("<C-j>"):lower():find("tmux") ~= nil, "<C-j> tmux gezintisine bagli (quickfix degil)")
+check(vim.fn.maparg("]q", "n") ~= "" and vim.fn.maparg("[q", "n") ~= "", "]q / [q varsayilan quickfix gezintisi duruyor")
+check(desc_of("s"):find("flash") ~= nil, "s: flash")
+check(desc_of("<leader>gn"):find("Neogit") ~= nil, "<leader>gn: Neogit")
+for _, lhs in ipairs({ "<leader>cf", "<leader>u", "<leader>aa", "<leader>fR", "<leader>xx", "<leader>ft", "<leader>db", "<leader>qs", "<leader>mm" }) do
+  check(desc_of(lhs) ~= "", lhs .. " tanimli ve aciklamali")
+end
+
+-- harpoon: dosya sabitlenir, sonra geri alinir (canli ortamda iz birakmasin)
+local hp = require("harpoon"):list()
+local hf = vim.fn.tempname() .. ".c"
+vim.fn.writefile({ "int x;" }, hf)
+vim.cmd("edit " .. hf)
+hp:add()
+check(hp:length() == 1, "harpoon: dosya sabitlendi")
+hp:clear()
+check(hp:length() == 0, "harpoon: liste temizlendi")
+vim.cmd("bwipeout!")
+
+-- dap + gdb
+local dap = require("dap")
+check(dap.adapters.gdb and vim.tbl_contains(dap.adapters.gdb.args, "--interpreter=dap"), "dap: gdb DAP modunda")
+check(dap.configurations.c ~= nil and dap.configurations.cpp ~= nil, "dap: c ve cpp yapilandirmasi var")
+if vim.fn.executable("gdb") == 1 then
+  local v = vim.fn.system({ "gdb", "--version" }):match("(%d+)%.%d+") or "0"
+  check(tonumber(v) >= 14, "gdb >= 14 (DAP icin), bulunan: " .. v)
+else
+  io.stdout:write("SKIP gdb yok\n")
+end
+
+-- :Make: asenkron calisir, hatalari quickfix'e yazar, `$*` argumanla degisir
+local saved_prg = vim.o.makeprg
+vim.o.makeprg = "printf 'a.c:7:1: error: ' && echo $*"
+local done, nerr = false, nil
+require("cfg.build").run("merhaba", function(_, n) done, nerr = true, n end)
+check(vim.wait(10000, function() return done end, 50), "Make: asenkron bitti")
+local qf = vim.fn.getqflist()
+check(qf[1] ~= nil and qf[1].lnum == 7 and qf[1].text:find("merhaba", 1, true) ~= nil and nerr == 1,
+  "Make: hata quickfix'e yazildi, $* -> merhaba")
+vim.o.makeprg = saved_prg
+vim.fn.setqflist({}, "r")
+vim.cmd("cclose")
+
+-- persistence: testin kendi oturumunu kaydetme (canli ortamda iz birakmasin)
+require("persistence").stop()
 
 -- 8. Treesitter: CLI varsa c parser'i kurulur ve vurgu baslar
 if vim.fn.executable("tree-sitter") == 1 then

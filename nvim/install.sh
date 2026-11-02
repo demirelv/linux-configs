@@ -15,6 +15,8 @@ sudo apt-get update
 sudo apt-get install -y \
     neovim \
     clangd \
+    clang-format \
+    gdb \
     build-essential \
     ripgrep \
     fd-find \
@@ -62,6 +64,7 @@ mkdir -p "$NVIM_CONFIG_DIR"
 
 # Sembolik bag: repo'daki init.lua'yi duzenlemek canli config'i de gunceller.
 link_file "$SCRIPT_DIR/init.lua" "$NVIM_CONFIG_DIR/init.lua"
+link_file "$SCRIPT_DIR/lua" "$NVIM_CONFIG_DIR/lua"
 
 # lazy.nvim'i init.lua kendisi bootstrap ediyor (stdpath("data")/lazy/lazy.nvim),
 # burada ayrica klonlamaya gerek yok. Eklentileri simdi kur:

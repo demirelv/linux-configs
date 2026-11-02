@@ -21,6 +21,7 @@ opt.updatetime = 300  -- gitsigns blame / LSP hover icin daha akici
 opt.completeopt = { "menu", "menuone", "noselect", "popup" } -- yerlesik tamamlama: liste + dokuman popup
 vim.o.grepprg = "rg --vimgrep --smart-case"
 vim.cmd("syntax on")
+require("cfg.options") -- undofile, split yonleri, inlay hint, exrc ... (lua/cfg/options.lua)
 
 local map = vim.keymap.set
 
@@ -173,6 +174,11 @@ require("lazy").setup({
       { "<leader>s", group = "Split" },
       { "<leader>t", group = "Sekme" },
       { "<leader><leader>", group = "Hizli arama (LSP / grep)" },
+      { "<leader>a", group = "Sabitlenen dosyalar (harpoon)" },
+      { "<leader>d", group = "Debug (dap) / semboller" },
+      { "<leader>m", group = "Derle (make)" },
+      { "<leader>q", group = "Oturum" },
+      { "<leader>x", group = "Sorun listesi (Trouble)" },
     },
   } },
 
@@ -207,6 +213,9 @@ require("lazy").setup({
     },
     config = function() require("neogit").setup({}) end,
   },
+
+  -- Ek eklentiler: her biri lua/cfg/plugins/<konu>.lua icinde, kendi kisayollariyla
+  { import = "cfg.plugins" },
 }, { performance = { rtp = { paths = extra_rtp } } })
 
 -- LSP tamamlama: eklentisiz, Neovim'in yerlesik ozelligi. Yazdikca liste acilir;
@@ -246,6 +255,7 @@ map("n", "<leader>fd", tb("diagnostics"), { desc = "Diagnostics" })
 map("i", "<C-Space>", function() vim.lsp.completion.get() end, { desc = "Tamamlamayi elle ac" })
 
 -- Git sinyalleri
+map("n", "<leader>gn", "<cmd>Neogit<CR>", { desc = "Neogit (git arayuzu)" })
 map("n", "]h", function() require("gitsigns").next_hunk() end, { desc = "Sonraki git hunk" })
 map("n", "[h", function() require("gitsigns").prev_hunk() end, { desc = "Onceki git hunk" })
 
@@ -329,8 +339,7 @@ map("n", "<S-Tab>", "gT", { desc = "Onceki sekme" })
 map("n", "<leader>bp", ":bprevious<CR>", { desc = "Onceki buffer" })
 map("n", "<leader>bn", ":bnext<CR>", { desc = "Sonraki buffer" })
 map("n", "<leader>bd", ":bd<CR>", { desc = "Buffer'i kapat" })
-map("n", "<C-n>", ":cnext<CR>", { desc = "Sonraki quickfix" })
-map("n", "<C-j>", ":cprevious<CR>", { desc = "Onceki quickfix" })
+-- Quickfix gezinme: Neovim varsayilani ]q / [q. (<C-j>/<C-n> artik vim-tmux-navigator ve baska islere ayrildi.)
 
 -- Pano (<C-v> blok secimi icin birakildi; terminalin kendi yapistirmasi da calisir)
 map({ "n", "x" }, "<leader>p", '"+p', { desc = "Panodan yapistir" })
@@ -356,6 +365,8 @@ map("x", "<C-S-Up>", ":move '<-2<CR>gv=gv", { silent = true, desc = "Secili sati
 map("x", "<C-S-Down>", ":move '>+1<CR>gv=gv", { silent = true, desc = "Secili satirlari asagi tasi" })
 map("n", "<C-S-Up>", ":m .-2<CR>==", { silent = true, desc = "Satiri yukari tasi" })
 map("n", "<C-S-Down>", ":m .+1<CR>==", { silent = true, desc = "Satiri asagi tasi" })
+
+require("cfg.build") -- :Make ve <leader>mm / <leader>mc (lua/cfg/build.lua)
 
 -- :Rg <aranan> [klasor] -> sonuclar quickfix'te (nvim-bqf onizleme verir)
 vim.api.nvim_create_user_command("Rg", function(o)

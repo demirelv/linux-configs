@@ -7,12 +7,14 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 NVIM_DIR="$(dirname "$SCRIPT_DIR")"
 
 tmp="$(mktemp -d)"
-trap 'rm -rf -- "${tmp:?}"' EXIT
+# Temizlik hatasi (kapanan sureclerle yaris) testin sonucunu bozmasin
+trap 'rm -rf -- "${tmp:?}" 2>/dev/null || true' EXIT
 
 export XDG_CONFIG_HOME="$tmp/config" XDG_DATA_HOME="$tmp/data" \
        XDG_STATE_HOME="$tmp/state" XDG_CACHE_HOME="$tmp/cache"
 mkdir -p "$XDG_CONFIG_HOME/nvim"
 cp "$NVIM_DIR/init.lua" "$XDG_CONFIG_HOME/nvim/init.lua"
+cp -r "$NVIM_DIR/lua" "$XDG_CONFIG_HOME/nvim/lua"
 
 echo "==> eklentiler taze kuruluyor (gecici dizin: $tmp)"
 nvim --headless "+Lazy! sync" "+qa!" >/dev/null 2>&1 || true
