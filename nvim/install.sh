@@ -11,7 +11,9 @@ echo "Installing C/C++ dev env with Neovim"
 
 # Ubuntu 24.04+ deposunda neovim yeterince guncel (>=0.11), PPA gerekmiyor.
 echo "Installing system packages..."
-sudo apt-get update
+# Ucuncu taraf bir depo bozuksa (ornegin Ubuntu surumu icin yayini olmayan PPA) update hata doner;
+# dogru depolarin listesi yine de yenilenir, o yuzden kurulum durmasin.
+sudo apt-get update || echo "    UYARI: apt update hata verdi (bozuk bir depo olabilir); kuruluma devam ediliyor"
 sudo apt-get install -y \
     neovim \
     clangd \

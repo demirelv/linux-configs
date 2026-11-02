@@ -35,7 +35,9 @@ while [ $# -gt 0 ]; do
 done
 
 echo "==> apt guncelleniyor"
-sudo apt-get update
+# Ucuncu taraf bir depo bozuksa (ornegin Ubuntu surumu icin yayini olmayan PPA) update hata doner;
+# dogru depolarin listesi yine de yenilenir, o yuzden kurulum durmasin.
+sudo apt-get update || echo "    UYARI: apt update hata verdi (bozuk bir depo olabilir); kuruluma devam ediliyor"
 
 echo "==> temel araclar kuruluyor"
 sudo apt-get install -y \
