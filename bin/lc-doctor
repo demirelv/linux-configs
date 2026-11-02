@@ -109,7 +109,7 @@ while IFS=$'\t' read -r name _ _ kind; do
 done < "$REPO/help/tools.tsv"
 good "$have tools installed"
 if [ ${#apt_missing[@]} -gt 0 ]; then warn "apt tools missing (${#apt_missing[@]}): ${apt_missing[*]}  -> tools/install-tools.sh all"; fi
-if [ ${#extra_missing[@]} -gt 0 ]; then warn "apt-less tools missing (${#extra_missing[@]}): ${extra_missing[*]}  -> docs/araclar.md (cargo install --locked ...)"; fi
+if [ ${#extra_missing[@]} -gt 0 ]; then warn "apt-less tools missing (${#extra_missing[@]}): ${extra_missing[*]}  -> tools/install-tools.sh extra (cargo; mise ayri, docs/araclar.md)"; fi
 
 echo
 echo "lc-doctor: $miss missing, $warn warnings"

@@ -4,7 +4,7 @@
 #   ./install.sh                    # varsayilan kurulum (nvim + araclar + dotfile'lar)
 #   ./install.sh --with-wireshark   # wireshark'i da kur
 #   ./install.sh --no-dotfiles      # dotfile kurulumunu atla
-#   ./install.sh --with-tools       # tum gelistirici araclarini kur (varsayilan: core + git gruplari)
+#   ./install.sh --with-tools       # tum gelistirici araclarini kur: apt gruplari + cargo/pipx araclari (varsayilan: core + git)
 #   ./install.sh --no-tools         # gelistirici araclarini kurma
 #   ./install.sh -h                 # yardim
 

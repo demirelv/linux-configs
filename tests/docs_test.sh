@@ -66,6 +66,13 @@ for p in $(awk -F'\t' '!/^#/ && $4 == "extra" { print $1 }' help/tools.tsv); do
 done
 ok "apt-disi araclarin kurulum satiri araclar.md'de var${noextra:+ (eksik:$noextra)}" test -z "$noextra"
 
+# 4c) install-tools.sh'deki cargo surumleri araclar.md'deki kurulum satirlariyla ayni
+badver=""
+while IFS='|' read -r _ crate ver; do
+    grep -qF "cargo install --locked $crate --version $ver" docs/araclar.md || badver="$badver $crate@$ver"
+done < <(sed -n '/^EXTRA_TOOLS=(/,/^)/p' tools/install-tools.sh | tr -d ' "' | grep '|')
+ok "cargo surumleri araclar.md ile ayni${badver:+ (farkli:$badver)}" test -z "$badver"
+
 # 5) dokumanda gecen `<leader>xx` kisayollari gercekten tanimli (docs/nvim.md, docs/ozet.md)
 lost=""
 for key in $(grep -ohE '`<leader>[A-Za-z?]+`' docs/nvim.md docs/ozet.md | tr -d '`' | sort -u); do

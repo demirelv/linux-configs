@@ -80,5 +80,29 @@ ok "delta varken ~/.gitconfig.delta kopyalandi" cmp -s "$REPO/git/delta.gitconfi
 ok "include.path tam bir kez" test "$(git config --global --get-all include.path | grep -cxF '~/.gitconfig.delta')" -eq 1
 ok "core.pager = delta (include ile)" test "$(git config --global --includes core.pager)" = "delta"
 
+# extra grubu: cargo/pipx ile kurar; kurulu olani atlar; birinin hatasi digerlerini durdurmaz
+cat > "$bin/cargo" <<'EOS'
+#!/usr/bin/env bash
+printf 'cargo %s\n' "$*" >> "$STUB_LOG"
+case "$*" in *tokei*) exit 1 ;; esac
+EOS
+cat > "$bin/pipx" <<'EOS'
+#!/usr/bin/env bash
+printf 'pipx %s\n' "$*" >> "$STUB_LOG"
+EOS
+chmod +x "$bin/cargo" "$bin/pipx"
+printf '#!/bin/sh\n' > "$bin/starship"; chmod +x "$bin/starship"   # zaten kurulu sayilir
+: > "$STUB_LOG"
+out="$(run extra || true)"
+log="$(cat "$STUB_LOG")"
+ok "extra: surum sabitli --locked cargo install" has "$log" "cargo install --locked atuin --version 18.8.0"
+ok "extra: kurulu starship atlanir" not has "$log" "starship"
+ok "extra: uv pipx ile kurulur" has "$log" "pipx install uv"
+ok "extra: biri (tokei) basarisiz olsa da digerleri kurulur" has "$log" "cargo install --locked xh --version"
+ok "extra: basarisiz arac raporlanir" has "$out" "kurulamayan extra araclar: tokei"
+ok "extra: dry-run cargo cagirmaz" test "$(: > "$STUB_LOG"; run --dry-run extra >/dev/null; wc -c < "$STUB_LOG")" -eq 0
+ok "all extra'yi de icerir" has "$(run --dry-run all)" "cargo/pipx"
+ok "extra yokken varsayilan cargo/pipx satiri yok" not has "$(run --dry-run)" "cargo/pipx"
+
 echo
 if [ "$failed" -eq 0 ]; then echo "TUMU GECTI"; else echo "$failed KONTROL BASARISIZ"; exit 1; fi
