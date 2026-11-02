@@ -24,6 +24,7 @@ export PATH="$HOME/.local/bin:$PATH"
 | `tp [filtre]` | `TP_ROOT` (varsayilan `$HOME`) altindaki klasorlerden birini `fzf` ile sectir; o klasorde, klasor adiyla bir tmux session'i ac ya da bagla. Tek eslesme varsa sormadan acar. |
 | `cdt`, `vimt`, `vimj`, `tmuxt <bilet>` | `~/Documents/FixedIssues/<bilet>` klasorune git / `notes.md` / `notes.jira` ac / bilet icin tmux ortami kur. Hepsinde Tab ile bilet adi tamamlanir. |
 
+| `lc-help [kelime]` | Komut/kisayol/arac arama (Ingilizce); ayrinti: [lc-help.md](lc-help.md) |
 | `yardim [konu]` | Bu dokumanlari terminalde goster. `yardim -l` konular, `yardim ara <kelime>` arama. Varsayilan konu `ozet`. |
 | `z <klasor>`, `zi` | Sik gidilen klasore atla (zoxide kuruluysa; bkz. [araclar.md](araclar.md)) |
 

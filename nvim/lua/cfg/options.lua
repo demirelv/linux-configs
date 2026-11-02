@@ -19,4 +19,4 @@ vim.lsp.inlay_hint.enable(true) -- clangd parametre adlarini satir ici gosterir
 
 vim.keymap.set("n", "<leader>cl", function()
   vim.opt.list = not vim.opt.list:get()
-end, { desc = "Gorunmez karakterleri ac/kapat" })
+end, { desc = "Toggle invisible characters" })

@@ -32,9 +32,9 @@ function M.run(args, on_done)
 end
 
 vim.api.nvim_create_user_command("Make", function(o) M.run(o.args) end,
-  { nargs = "*", desc = "makeprg'yi asenkron calistir, sonucu quickfix'e yaz" })
+  { nargs = "*", desc = "Run makeprg asynchronously and fill quickfix" })
 
-vim.keymap.set("n", "<leader>mm", function() M.run("") end, { desc = "Derle (makeprg, asenkron)" })
-vim.keymap.set("n", "<leader>mc", function() M.run("clean") end, { desc = "Derleme ciktilarini temizle (clean)" })
+vim.keymap.set("n", "<leader>mm", function() M.run("") end, { desc = "Build (makeprg, async)" })
+vim.keymap.set("n", "<leader>mc", function() M.run("clean") end, { desc = "Clean build outputs (make clean)" })
 
 return M

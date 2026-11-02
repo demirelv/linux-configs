@@ -167,18 +167,18 @@ require("lazy").setup({
   { "folke/which-key.nvim", event = "VeryLazy", opts = {
     delay = 300,
     spec = {
-      { "<leader>f", group = "Ara (Telescope)" },
+      { "<leader>f", group = "Search (Telescope)" },
       { "<leader>b", group = "Buffer" },
-      { "<leader>c", group = "Kod" },
+      { "<leader>c", group = "Code" },
       { "<leader>g", group = "LSP / Git (Telescope)" },
       { "<leader>s", group = "Split" },
-      { "<leader>t", group = "Sekme" },
-      { "<leader><leader>", group = "Hizli arama (LSP / grep)" },
-      { "<leader>a", group = "Sabitlenen dosyalar (harpoon)" },
-      { "<leader>d", group = "Debug (dap) / semboller" },
-      { "<leader>m", group = "Derle (make)" },
-      { "<leader>q", group = "Oturum" },
-      { "<leader>x", group = "Sorun listesi (Trouble)" },
+      { "<leader>t", group = "Tab" },
+      { "<leader><leader>", group = "Quick search (LSP / grep)" },
+      { "<leader>a", group = "Pinned files (harpoon)" },
+      { "<leader>d", group = "Debug (dap) / symbols" },
+      { "<leader>m", group = "Build (make)" },
+      { "<leader>q", group = "Session" },
+      { "<leader>x", group = "Problem lists (Trouble)" },
     },
   } },
 
@@ -234,45 +234,45 @@ vim.api.nvim_create_autocmd("LspAttach", {
 -- Bir kisayol baska bir kisayolun on eki olmamali (tests/check.lua bunu dener).
 
 -- Kisayol / komut arama
-map("n", "<F1>", tb("keymaps"), { desc = "Kisayol ara" })
-map("n", "<leader>fk", tb("keymaps"), { desc = "Kisayol ara" })
-map("n", "<leader>fc", tb("commands"), { desc = "Komut ara" })
-map("n", "<leader>?", function() require("which-key").show({ global = false }) end, { desc = "Bu buffer'in kisayollari" })
+map("n", "<F1>", tb("keymaps"), { desc = "Search keymaps" })
+map("n", "<leader>fk", tb("keymaps"), { desc = "Search keymaps" })
+map("n", "<leader>fc", tb("commands"), { desc = "Search commands" })
+map("n", "<leader>?", function() require("which-key").show({ global = false }) end, { desc = "Keymaps of this buffer" })
 
 -- Popup ile dosya / metin arama
-map("n", "<leader>ff", tb("find_files"), { desc = "Dosya ara" })
-map("n", "<leader>fg", grep_args, { desc = "Proje ici grep (rg argumanli)" })
+map("n", "<leader>ff", tb("find_files"), { desc = "Find files" })
+map("n", "<leader>fg", grep_args, { desc = "Project grep (with rg arguments)" })
 map({ "n", "x" }, "<leader>fw", function()
   require("telescope.builtin").live_grep({ default_text = word_or_selection() })
-end, { desc = "Kelime/secimi grep'le" })
-map("n", "<leader>fs", tb("current_buffer_fuzzy_find"), { desc = "Bu dosyada ara" })
-map("n", "<leader>fb", tb("buffers"), { desc = "Buffer ara" })
-map("n", "<leader>fo", tb("oldfiles"), { desc = "Son dosyalar" })
-map("n", "<leader>fr", tb("resume"), { desc = "Son aramaya don" })
-map("n", "<leader>fh", tb("help_tags"), { desc = "Yardim ara" })
+end, { desc = "Grep the word or selection" })
+map("n", "<leader>fs", tb("current_buffer_fuzzy_find"), { desc = "Search in this file" })
+map("n", "<leader>fb", tb("buffers"), { desc = "Find buffer" })
+map("n", "<leader>fo", tb("oldfiles"), { desc = "Recent files" })
+map("n", "<leader>fr", tb("resume"), { desc = "Resume the last search" })
+map("n", "<leader>fh", tb("help_tags"), { desc = "Search help tags" })
 map("n", "<leader>fd", tb("diagnostics"), { desc = "Diagnostics" })
 
-map("i", "<C-Space>", function() vim.lsp.completion.get() end, { desc = "Tamamlamayi elle ac" })
+map("i", "<C-Space>", function() vim.lsp.completion.get() end, { desc = "Trigger completion manually" })
 
 -- Git sinyalleri
-map("n", "<leader>gn", "<cmd>Neogit<CR>", { desc = "Neogit (git arayuzu)" })
-map("n", "]h", function() require("gitsigns").next_hunk() end, { desc = "Sonraki git hunk" })
-map("n", "[h", function() require("gitsigns").prev_hunk() end, { desc = "Onceki git hunk" })
+map("n", "<leader>gn", "<cmd>Neogit<CR>", { desc = "Neogit (git UI)" })
+map("n", "]h", function() require("gitsigns").next_hunk() end, { desc = "Next git hunk" })
+map("n", "[h", function() require("gitsigns").prev_hunk() end, { desc = "Previous git hunk" })
 
 -- LSP kisa yollari
-map({ "n", "x" }, "gd", vim.lsp.buf.definition, { desc = "Tanima git" })
-map({ "n", "x" }, "gD", vim.lsp.buf.declaration, { desc = "Bildirime git" })
-map({ "n", "x" }, "gi", vim.lsp.buf.implementation, { desc = "Implementasyona git" })
+map({ "n", "x" }, "gd", vim.lsp.buf.definition, { desc = "Go to definition" })
+map({ "n", "x" }, "gD", vim.lsp.buf.declaration, { desc = "Go to declaration" })
+map({ "n", "x" }, "gi", vim.lsp.buf.implementation, { desc = "Go to implementation" })
 -- "gr" bilerek yok: Neovim 0.11+ varsayilanlari grr (referanslar), grn (yeniden adlandir), gra (code action),
 -- gri, grt ile cakisir. Referanslar icin grr kullan.
 map({ "n", "x" }, "K", vim.lsp.buf.hover, { desc = "Hover" })
 
 -- Telescope LSP
-map({ "n", "x" }, "<leader>gd", "<cmd>Telescope lsp_definitions<CR>", { desc = "LSP tanimlar" })
-map({ "n", "x" }, "<leader>gr", "<cmd>Telescope lsp_references<CR>", { desc = "LSP referanslar" })
-map({ "n", "x" }, "<leader>gi", "<cmd>Telescope lsp_implementations<CR>", { desc = "LSP implementasyonlar" })
-map({ "n", "x" }, "<leader>ds", "<cmd>Telescope lsp_document_symbols<CR>", { desc = "Dosya sembolleri" })
-map({ "n", "x" }, "<leader>ws", "<cmd>Telescope lsp_workspace_symbols<CR>", { desc = "Workspace sembolleri" })
+map({ "n", "x" }, "<leader>gd", "<cmd>Telescope lsp_definitions<CR>", { desc = "LSP definitions" })
+map({ "n", "x" }, "<leader>gr", "<cmd>Telescope lsp_references<CR>", { desc = "LSP references" })
+map({ "n", "x" }, "<leader>gi", "<cmd>Telescope lsp_implementations<CR>", { desc = "LSP implementations" })
+map({ "n", "x" }, "<leader>ds", "<cmd>Telescope lsp_document_symbols<CR>", { desc = "Document symbols" })
+map({ "n", "x" }, "<leader>ws", "<cmd>Telescope lsp_workspace_symbols<CR>", { desc = "Workspace symbols" })
 
 map({ "n", "x" }, "<F2>", function()
   local num, rel = vim.wo.number, vim.wo.relativenumber
@@ -283,68 +283,68 @@ map({ "n", "x" }, "<F2>", function()
   else
     vim.wo.number, vim.wo.relativenumber = false, false
   end
-end, { desc = "Satir numarasi modu degistir" })
+end, { desc = "Cycle line-number mode" })
 
 -- fzf.vim ve Telescope F tuslari
-map("n", "<F3>", ":Files<CR>", { desc = "fzf: dosya bul" })
-map("n", "<leader>bl", ":Buffers<CR>", { desc = "fzf: buffer listesi" })
-map("n", "<leader>gf", ":GFiles<CR>", { desc = "fzf: git dosyalari" })
-map("n", "<F4>", tb("find_files"), { desc = "Dosya ara", silent = true })
-map("n", "<F5>", grep_args, { desc = "Proje ici grep (rg argumanli)", silent = true })
-map("n", "<F6>", tb("buffers"), { desc = "Buffer listesi", silent = true })
-map("n", "<F7>", tb("git_files"), { desc = "Git dosyalari", silent = true })
-map("n", "<F8>", ":Telescope find_files cwd=%:p:h<CR>", { desc = "Bu klasorde dosya ara", silent = true })
-map("n", "<F9>", tb("command_history"), { desc = "Komut gecmisi", silent = true })
-map("n", "<F10>", tb("lsp_document_symbols"), { desc = "Dosya sembolleri", silent = true })
+map("n", "<F3>", ":Files<CR>", { desc = "fzf: find files" })
+map("n", "<leader>bl", ":Buffers<CR>", { desc = "fzf: list buffers" })
+map("n", "<leader>gf", ":GFiles<CR>", { desc = "fzf: git files" })
+map("n", "<F4>", tb("find_files"), { desc = "Find files", silent = true })
+map("n", "<F5>", grep_args, { desc = "Project grep (with rg arguments)", silent = true })
+map("n", "<F6>", tb("buffers"), { desc = "List buffers", silent = true })
+map("n", "<F7>", tb("git_files"), { desc = "Git files", silent = true })
+map("n", "<F8>", ":Telescope find_files cwd=%:p:h<CR>", { desc = "Find files in this file's directory", silent = true })
+map("n", "<F9>", tb("command_history"), { desc = "Command history", silent = true })
+map("n", "<F10>", tb("lsp_document_symbols"), { desc = "Document symbols", silent = true })
 
 -- Hizli arama (<leader><leader>N)
-map("n", "<leader><leader>0", "<cmd>Telescope lsp_workspace_symbols<CR>", { desc = "Workspace sembolleri" })
-map("n", "<leader><leader>1", "<cmd>Telescope lsp_definitions<CR>", { desc = "Tanima git" })
-map("n", "<leader><leader>2", vim.lsp.buf.outgoing_calls, { desc = "Giden cagrilar" })
-map("n", "<leader><leader>3", vim.lsp.buf.incoming_calls, { desc = "Gelen cagrilar" })
+map("n", "<leader><leader>0", "<cmd>Telescope lsp_workspace_symbols<CR>", { desc = "Workspace symbols" })
+map("n", "<leader><leader>1", "<cmd>Telescope lsp_definitions<CR>", { desc = "Go to definition" })
+map("n", "<leader><leader>2", vim.lsp.buf.outgoing_calls, { desc = "Outgoing calls" })
+map("n", "<leader><leader>3", vim.lsp.buf.incoming_calls, { desc = "Incoming calls" })
 map({ "n", "x" }, "<leader><leader>4", function()
   require("telescope.builtin").live_grep({ default_text = word_or_selection() })
-end, { desc = "Kelime/secimi grep'le", silent = true })
+end, { desc = "Grep the word or selection", silent = true })
 map("n", "<leader><leader>5", tb("live_grep"), { desc = "Grep (regex)" })
-map("n", "<leader><leader>6", tb("find_files"), { desc = "Dosya ara" })
-map("n", "<leader><leader>7", tb("grep_string"), { desc = "Kelimeyi grep'le" })
-map("n", "<leader><leader>8", "<cmd>Telescope lsp_references<CR>", { desc = "Referanslar" })
+map("n", "<leader><leader>6", tb("find_files"), { desc = "Find files" })
+map("n", "<leader><leader>7", tb("grep_string"), { desc = "Grep the word under the cursor" })
+map("n", "<leader><leader>8", "<cmd>Telescope lsp_references<CR>", { desc = "References" })
 map("n", "<leader><leader>9", "<cmd>Telescope diagnostics<CR>", { desc = "Diagnostics" })
 
 -- Ziplama gecmisi
-map("n", "<C-Left>", "<C-o>", { desc = "Onceki konum" })
-map("n", "<C-Right>", "<C-i>", { desc = "Sonraki konum" })
+map("n", "<C-Left>", "<C-o>", { desc = "Previous jump position" })
+map("n", "<C-Right>", "<C-i>", { desc = "Next jump position" })
 
 -- Neo-tree
-map("n", "<leader>e", ":Neotree toggle<CR>", { desc = "Dosya agaci" })
+map("n", "<leader>e", ":Neotree toggle<CR>", { desc = "File tree" })
 
 -- Split'ler
-map("n", "<leader>sh", "<C-w>s", { desc = "Yatay split" })
-map("n", "<leader>sv", "<C-w>v", { desc = "Dikey split" })
-map("n", "<leader>h", "<C-w>h", { desc = "Sol split" })
-map("n", "<leader>j", "<C-w>j", { desc = "Alt split" })
-map("n", "<leader>k", "<C-w>k", { desc = "Ust split" })
-map("n", "<leader>l", "<C-w>l", { desc = "Sag split" })
-map("n", "<leader>ww", "<C-w>w", { desc = "Siradaki split" })
-map("n", "<leader>+", "<C-w>+", { desc = "Split yuksekligi artir" })
-map("n", "<leader>-", "<C-w>-", { desc = "Split yuksekligi azalt" })
-map("n", "<leader><", "<C-w><", { desc = "Split genisligi azalt" })
-map("n", "<leader>>", "<C-w>>", { desc = "Split genisligi artir" })
+map("n", "<leader>sh", "<C-w>s", { desc = "Horizontal split" })
+map("n", "<leader>sv", "<C-w>v", { desc = "Vertical split" })
+map("n", "<leader>h", "<C-w>h", { desc = "Go to the left split" })
+map("n", "<leader>j", "<C-w>j", { desc = "Go to the split below" })
+map("n", "<leader>k", "<C-w>k", { desc = "Go to the split above" })
+map("n", "<leader>l", "<C-w>l", { desc = "Go to the right split" })
+map("n", "<leader>ww", "<C-w>w", { desc = "Go to the next split" })
+map("n", "<leader>+", "<C-w>+", { desc = "Increase split height" })
+map("n", "<leader>-", "<C-w>-", { desc = "Decrease split height" })
+map("n", "<leader><", "<C-w><", { desc = "Decrease split width" })
+map("n", "<leader>>", "<C-w>>", { desc = "Increase split width" })
 
 -- Sekmeler ve buffer'lar
-map("n", "<leader>tn", ":tabnew<CR>", { desc = "Yeni sekme" })
-map("n", "<leader>tc", ":tabclose<CR>", { desc = "Sekmeyi kapat" })
-map("n", "<Tab>", "gt", { desc = "Sonraki sekme" })
-map("n", "<S-Tab>", "gT", { desc = "Onceki sekme" })
-map("n", "<leader>bp", ":bprevious<CR>", { desc = "Onceki buffer" })
-map("n", "<leader>bn", ":bnext<CR>", { desc = "Sonraki buffer" })
-map("n", "<leader>bd", ":bd<CR>", { desc = "Buffer'i kapat" })
+map("n", "<leader>tn", ":tabnew<CR>", { desc = "New tab" })
+map("n", "<leader>tc", ":tabclose<CR>", { desc = "Close tab" })
+map("n", "<Tab>", "gt", { desc = "Next tab" })
+map("n", "<S-Tab>", "gT", { desc = "Previous tab" })
+map("n", "<leader>bp", ":bprevious<CR>", { desc = "Previous buffer" })
+map("n", "<leader>bn", ":bnext<CR>", { desc = "Next buffer" })
+map("n", "<leader>bd", ":bd<CR>", { desc = "Close buffer" })
 -- Quickfix gezinme: Neovim varsayilani ]q / [q. (<C-j>/<C-n> artik vim-tmux-navigator ve baska islere ayrildi.)
 
 -- Pano (<C-v> blok secimi icin birakildi; terminalin kendi yapistirmasi da calisir)
-map({ "n", "x" }, "<leader>p", '"+p', { desc = "Panodan yapistir" })
-map("n", "<leader>y", '"+yy', { desc = "Satiri panoya kopyala" })
-map("x", "<leader>y", '"+y', { desc = "Seciliyi panoya kopyala" })
+map({ "n", "x" }, "<leader>p", '"+p', { desc = "Paste from the clipboard" })
+map("n", "<leader>y", '"+yy', { desc = "Copy line to the clipboard" })
+map("x", "<leader>y", '"+y', { desc = "Copy selection to the clipboard" })
 
 -- Kod bicimleme (ayri ayri, bilincli)
 map("n", "<leader>cw", function()
@@ -352,19 +352,19 @@ map("n", "<leader>cw", function()
   vim.cmd([[keeppatterns %s/\s\+$//e]])
   vim.fn.winrestview(view)
   print("Satir sonu bosluklari silindi")
-end, { desc = "Satir sonu bosluklarini sil" })
+end, { desc = "Remove trailing whitespace" })
 map("n", "<leader>ci", function()
   local view = vim.fn.winsaveview()
   vim.cmd("normal! gg=G")
   vim.fn.winrestview(view)
   print("Dosya yeniden girintilendi")
-end, { desc = "Tum dosyayi yeniden girintile" })
+end, { desc = "Re-indent the whole file" })
 
 -- Satir tasima
-map("x", "<C-S-Up>", ":move '<-2<CR>gv=gv", { silent = true, desc = "Secili satirlari yukari tasi" })
-map("x", "<C-S-Down>", ":move '>+1<CR>gv=gv", { silent = true, desc = "Secili satirlari asagi tasi" })
-map("n", "<C-S-Up>", ":m .-2<CR>==", { silent = true, desc = "Satiri yukari tasi" })
-map("n", "<C-S-Down>", ":m .+1<CR>==", { silent = true, desc = "Satiri asagi tasi" })
+map("x", "<C-S-Up>", ":move '<-2<CR>gv=gv", { silent = true, desc = "Move selected lines up" })
+map("x", "<C-S-Down>", ":move '>+1<CR>gv=gv", { silent = true, desc = "Move selected lines down" })
+map("n", "<C-S-Up>", ":m .-2<CR>==", { silent = true, desc = "Move line up" })
+map("n", "<C-S-Down>", ":m .+1<CR>==", { silent = true, desc = "Move line down" })
 
 require("cfg.build") -- :Make ve <leader>mm / <leader>mc (lua/cfg/build.lua)
 
@@ -382,7 +382,7 @@ vim.api.nvim_create_user_command("Rg", function(o)
   })
   vim.cmd("copen")
   vim.cmd("wincmd p") -- imleci onceki pencereye geri al
-end, { nargs = "*", complete = "file", desc = "Klasorde ara, sonuclari quickfix'te ac" })
+end, { nargs = "*", complete = "file", desc = "Search a directory and open results in quickfix" })
 
 map("n", "<leader>9", function()
   local cwd = vim.fn.getcwd()
@@ -402,7 +402,7 @@ map("n", "<leader>9", function()
       end)
     end,
   })
-end, { desc = "Cscope DB yeniden olustur" })
+end, { desc = "Rebuild the cscope database" })
 
 map("n", "<C-q>", function()
   for _, win in ipairs(vim.fn.getwininfo()) do
@@ -412,4 +412,4 @@ map("n", "<C-q>", function()
     end
   end
   vim.cmd("copen")
-end, { desc = "Quickfix ac/kapat", silent = true })
+end, { desc = "Toggle quickfix", silent = true })

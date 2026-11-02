@@ -136,6 +136,7 @@ fi
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 # cd-ticket-dir
+# help: cdt <ticket> -- cd into ~/Documents/FixedIssues/<ticket> (created if missing)
 cdt() {
     if [ $# -ne 1 ]; then
 	echo "Usage: ${FUNCNAME[0]} <ticket-name>"
@@ -145,6 +146,7 @@ cdt() {
     cd ~/Documents/FixedIssues/"$1" || return
 }
 # vim-ticket
+# help: vimt <ticket> -- Open notes.md of the ticket in $EDITOR
 vimt() {
     if [ $# -ne 1 ]; then
 	echo "Usage: ${FUNCNAME[0]} <ticket-name>"
@@ -155,6 +157,7 @@ vimt() {
 }
 
 # vim-jira
+# help: vimj <ticket> -- Open notes.jira of the ticket in $EDITOR
 vimj() {
     if [ $# -ne 1 ]; then
 	echo "Usage: ${FUNCNAME[0]} <ticket-name>"
@@ -169,6 +172,8 @@ vimj() {
 #   TMUXT_SERIAL  seri port (varsayilan: /dev/serial/by-id altindaki ilk aygit, yoksa /dev/ttyUSB0)
 #   TMUXT_ETH     ag arayuzu (varsayilan: eth0)
 # /dev/serial/by-id adi aygit yeniden baslayinca ttyUSB0 -> ttyUSB1 kaysa da degismez.
+# help-env: TMUXT_SERIAL -- Serial port tmuxt uses (default: first device in /dev/serial/by-id, else /dev/ttyUSB0)
+# help-env: TMUXT_ETH -- Network interface tmuxt configures (default: eth0)
 _tmuxt_serial() {
     if [ -n "${TMUXT_SERIAL:-}" ]; then printf '%s\n' "$TMUXT_SERIAL"; return; fi
     local first
@@ -179,6 +184,7 @@ _tmuxt_serial() {
 _tmuxt_console() {
     if command -v tio >/dev/null 2>&1; then echo "sudo tio $1"; else echo "sudo minicom -w -D $1 -c on"; fi
 }
+# help: tmuxt <ticket> -- tmux workspace for a ticket: serial console, notes and network setup
 tmuxt() {
     if [ $# -ne 1 ]; then
         echo "Usage: ${FUNCNAME[0]} <ticket-name>"
@@ -208,10 +214,13 @@ _tm_open() {
     fi
 }
 # Kullanim: tm [isim]  (varsayilan: main)
+# help: tm [name] -- Attach to or create a tmux session (switches when already inside tmux)
 tm() { _tm_open "${1:-main}"; }
 
 # tp [filtre]: TP_ROOT (varsayilan $HOME) altindaki klasorlerden birini sectir, o isimle tmux session'i ac.
 # Session adi klasor adidir ("." ve ":" tmux'ta yasak oldugu icin "_" olur). Tek eslesme varsa sormadan acar.
+# help-env: TP_ROOT -- Directory whose subdirectories tp lists (default: $HOME)
+# help: tp [filter] -- Pick a project directory with fzf and open a tmux session named after it
 tp() {
     local root="${TP_ROOT:-$HOME}" list pick
     [ -d "$root" ] || { echo "tp: $root yok (TP_ROOT ayarla)" >&2; return 1; }
@@ -229,6 +238,7 @@ tp() {
 
 # tmux: baska session'daki pencereyi tasi. Kullanim: tmw kaynak [hedef]
 #   kaynak: session:pencere (ornek main:2)   hedef: session: (varsayilan: simdiki session)
+# help: tmw <session:window> [session] -- Move a window from another session into this one
 tmw() {
     [ -n "$1" ] || { echo "kullanim: tmw session:pencere [hedef_session]" >&2; return 1; }
     local dst="${2:-$(tmux display-message -p '#S')}"
@@ -238,6 +248,7 @@ tmw() {
 # tmux: baska session'daki pencereyi simdiki pencereye pane olarak birlestir.
 # Kullanim: tmj [kaynak] [hedef]   kaynak/hedef: session:pencere (hedef varsayilan: simdiki pencere)
 #   Parametresiz: tum session/pencereler arasindan sectirir (fzf varsa fzf, yoksa numarali menu).
+# help: tmj [session:window] [target] -- Join a window into the current window as a pane (menu when no argument)
 tmj() {
     local src="$1" cur
     cur="$(tmux display-message -p '#S:#I')" || return 1
@@ -328,6 +339,7 @@ if command -v eza >/dev/null 2>&1; then alias lt='eza --tree --level=2'; fi  # l
 # .bashrc repo'ya sembolik bagliysa dokumanlar bulunur (install.sh boyle kurar).
 _LC_DIR="$(cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." 2>/dev/null && pwd)"
 # Kullanim: yardim [konu] | yardim -l (konular) | yardim ara <kelime>   (varsayilan konu: ozet)
+# help: yardim [topic] -- Page the Turkish docs of this repo (yardim -l lists topics, yardim ara <word> greps them)
 yardim() {
     local docs="$_LC_DIR/docs" topic="${1:-ozet}" f
     if [ ! -d "$docs" ]; then echo "yardim: $docs yok (.bashrc repo'ya sembolik bagli degil)" >&2; return 1; fi
@@ -350,3 +362,6 @@ _yardim_complete() {
     mapfile -t COMPREPLY < <(compgen -W "$(yardim -l 2>/dev/null) ara" -- "${COMP_WORDS[COMP_CWORD]}")
 }
 complete -F _yardim_complete yardim
+
+# help: lc-help [words] -- Search all commands, keys and tools of this repo (Ctrl-x h; in tmux Prefix F1; -k keys only)
+if command -v lc-help >/dev/null 2>&1; then bind '"\C-xh": "lc-help\C-m"'; fi

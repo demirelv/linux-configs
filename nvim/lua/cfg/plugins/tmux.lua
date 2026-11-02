@@ -3,10 +3,10 @@
 vim.g.tmux_navigator_no_mappings = 1
 
 local map = vim.keymap.set
-map("n", "<C-h>", "<cmd>TmuxNavigateLeft<CR>", { desc = "Sola git (nvim split / tmux pane)" })
-map("n", "<C-j>", "<cmd>TmuxNavigateDown<CR>", { desc = "Asagi git (nvim split / tmux pane)" })
-map("n", "<C-k>", "<cmd>TmuxNavigateUp<CR>", { desc = "Yukari git (nvim split / tmux pane)" })
-map("n", "<C-l>", "<cmd>TmuxNavigateRight<CR>", { desc = "Saga git (nvim split / tmux pane)" })
+map("n", "<C-h>", "<cmd>TmuxNavigateLeft<CR>", { desc = "Go left (nvim split / tmux pane)" })
+map("n", "<C-j>", "<cmd>TmuxNavigateDown<CR>", { desc = "Go down (nvim split / tmux pane)" })
+map("n", "<C-k>", "<cmd>TmuxNavigateUp<CR>", { desc = "Go up (nvim split / tmux pane)" })
+map("n", "<C-l>", "<cmd>TmuxNavigateRight<CR>", { desc = "Go right (nvim split / tmux pane)" })
 
 return {
   { "christoomey/vim-tmux-navigator",

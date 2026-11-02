@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+# lc-help: quick, searchable help for this repo: shell commands, tmux keys, Neovim keys and tools.
+#
+#   lc-help                       fuzzy search everything (fzf; a plain list when not on a terminal)
+#   lc-help <word>...             entries that contain all the words (case-insensitive)
+#   lc-help cmd|env|tmux|nvim|tool [word]...   only entries of one kind
+#   lc-help -k, --keys [word]...  tmux and Neovim key bindings only
+#   lc-help -l, --list            kinds with their entry counts
+#   lc-help --popup               like no argument, then wait for a key (used by tmux: Prefix + F1)
+#   lc-help --rebuild             rebuild the index now (otherwise it is rebuilt when a source changed)
+#   lc-help -h, --help
+#
+# Nothing is typed twice. The index is generated from: `# help:` and `# help-env:` lines in bash/.bashrc,
+# `bind-key -N` notes in tmux/.tmux.conf, the desc of every Neovim keymap (bin/lc-help-nvim.lua) and
+# help/tools.tsv. Cache: ${LC_HELP_CACHE:-~/.cache/lc-help}/index.tsv  (kind, key, description, source, example)
+set -Eeuo pipefail
+
+SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
+REPO="$(cd -- "$(dirname -- "$SELF")/.." && pwd)"
+CACHE_DIR="${LC_HELP_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/lc-help}"
+INDEX="$CACHE_DIR/index.tsv"
+KINDS="cmd env tmux nvim tool"
+
+usage() { sed -n '2,12p' "$SELF" | sed 's/^# \{0,1\}//'; }
+
+# ---------- sources -> index ----------
+
+entries_shell() {
+    local f="$REPO/bash/.bashrc"
+    [ -f "$f" ] || return 0
+    sed -n 's/^# help: \(.*\) -- \(.*\)$/cmd\t\1\t\2\tbash\/.bashrc/p' "$f"
+    sed -n 's/^# help-env: \([A-Za-z_][A-Za-z0-9_]*\) -- \(.*\)$/env\t\1\t\2\tbash\/.bashrc/p' "$f"
+}
+
+# Starts a throw-away tmux server with the repo config and reads the key notes (list-keys -N).
+entries_tmux() {
+    command -v tmux >/dev/null 2>&1 || return 0
+    local conf="$REPO/tmux/.tmux.conf" sock="lc-help-$$" table label
+    [ -f "$conf" ] || return 0
+    env -u TMUX tmux -L "$sock" -f "$conf" new-session -d -s lc-help 2>/dev/null || return 0
+    for table in prefix root copy-mode-vi; do
+        case "$table" in
+            prefix) label="Prefix " ;;
+            root) label="" ;;
+            *) label="copy-mode " ;;
+        esac
+        env -u TMUX tmux -L "$sock" list-keys -N -T "$table" 2>/dev/null \
+            | awk -v label="$label" -v tbl="$table" \
+                '{ k = $1; sub(/^[^ ]+ +/, ""); printf "tmux\t%s%s\t%s\ttmux (%s table)\n", label, k, $0, tbl }' || true
+    done
+    env -u TMUX tmux -L "$sock" kill-server 2>/dev/null || true
+}
+
+entries_nvim() {
+    command -v nvim >/dev/null 2>&1 || return 0
+    nvim --headless "+luafile $REPO/bin/lc-help-nvim.lua" "+qa!" 2>/dev/null </dev/null | grep -a $'^nvim\t' || true
+}
+
+entries_tools() {
+    local f="$REPO/help/tools.tsv"
+    [ -f "$f" ] || return 0
+    awk -F'\t' '!/^#/ && NF >= 2 { printf "tool\t%s\t%s\ttools/install-tools.sh\t%s\n", $1, $2, $3 }' "$f"
+}
+
+build_index() {
+    mkdir -p "$CACHE_DIR"
+    local tmp; tmp="$(mktemp "$CACHE_DIR/index.XXXXXX")"
+    { entries_shell; entries_tmux; entries_nvim; entries_tools; } \
+        | awk -F'\t' 'BEGIN { OFS = "\t" } { NF = 5; print }' \
+        | sort -t "$(printf '\t')" -k1,1 -k2,2 -s > "$tmp"
+    mv -f "$tmp" "$INDEX"
+}
+
+index_is_stale() {
+    [ -s "$INDEX" ] || return 0
+    find "$REPO/bash/.bashrc" "$REPO/tmux/.tmux.conf" "$REPO/help" "$REPO/bin/lc-help-nvim.lua" \
+        "$REPO/nvim/init.lua" "$REPO/nvim/lua" -newer "$INDEX" -print -quit 2>/dev/null | grep -q .
+}
+
+# ---------- views ----------
+
+kind_filter() { # $1: space/comma separated kinds; reads the index on stdin
+    awk -F'\t' -v ks="$1" 'BEGIN { n = split(ks, a, /[ ,]+/) } { for (i = 1; i <= n; i++) if ($1 == a[i]) { print; break } }'
+}
+
+word_filter() { # $@: words; every word must occur somewhere in the line (case-insensitive)
+    awk -F'\t' -v words="$*" 'BEGIN { n = split(tolower(words), a, " ") }
+        { l = tolower($0); for (i = 1; i <= n; i++) if (index(l, a[i]) == 0) next; print }'
+}
+
+table_view() { awk -F'\t' '{ printf "%-5s %-32s %s\n", $1, $2, $3 }'; }
+
+preview() { # $1: one index line (tab separated)
+    printf '%s\n' "$1" | awk -F'\t' '{
+        printf "Kind:     %s\nKey:      %s\nAbout:    %s\nDefined:  %s\n", $1, $2, $3, $4
+        if ($5 != "") printf "Example:  %s\n", $5 }'
+}
+
+pick() { # stdin: index lines; $1: initial query
+    local line
+    line="$(awk -F'\t' '{ printf "%-5s %-32s %s\t%s\n", $1, $2, $3, $0 }' \
+        | fzf --delimiter=$'\t' --with-nth=1 --prompt='lc-help> ' --query="${1:-}" --layout=reverse \
+              --border --preview="$SELF --preview-line {2..}" --preview-window='right,42%,wrap')" || return 0
+    [ -n "$line" ] || return 0
+    printf '%s\n' "${line#*$'\t'}" | { preview "$(cat)"; }
+}
+
+main() {
+    local popup=0 kinds="$KINDS" words=()
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h|--help) usage; return 0 ;;
+            --preview-line) preview "$2"; return 0 ;;
+            --rebuild) build_index; echo "lc-help: index rebuilt ($(wc -l < "$INDEX") entries) at $INDEX"; return 0 ;;
+            --popup) popup=1 ;;
+            -k|--keys) kinds="tmux nvim" ;;
+            -l|--list) LIST=1 ;;
+            cmd|env|tmux|nvim|tool) if [ ${#words[@]} -eq 0 ] && [ "$kinds" = "$KINDS" ]; then kinds="$1"; else words+=("$1"); fi ;;
+            *) words+=("$1") ;;
+        esac
+        shift
+    done
+
+    if index_is_stale; then build_index; fi
+
+    if [ "${LIST:-0}" -eq 1 ]; then
+        awk -F'\t' '{ c[$1]++ } END { for (k in c) printf "%-5s %d\n", k, c[k] }' "$INDEX" | sort
+        return 0
+    fi
+
+    local data; data="$(kind_filter "$kinds" < "$INDEX")"
+    local interactive=0
+    if [ -t 0 ] && [ -t 1 ] && command -v fzf >/dev/null 2>&1; then interactive=1; fi
+
+    if [ "$interactive" -eq 1 ]; then
+        printf '%s\n' "$data" | pick "${words[*]:-}"
+    else
+        local shown="$data"
+        if [ ${#words[@]} -gt 0 ]; then shown="$(printf '%s\n' "$data" | word_filter "${words[@]}")"; fi
+        if [ -z "$shown" ]; then echo "lc-help: no match for '${words[*]:-}'" >&2; return 1; fi
+        printf '%s\n' "$shown" | table_view
+    fi
+
+    if [ "$popup" -eq 1 ]; then read -rsn1 -p $'\n[press any key to close] ' || true; fi
+}
+
+main "$@"

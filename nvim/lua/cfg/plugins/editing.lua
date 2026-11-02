@@ -5,8 +5,8 @@ local map = vim.keymap.set
 -- Kaydederken otomatik bicimlendirme YOK: baskasinin kodunu toplu degistirmemek icin bilincli.
 map({ "n", "x" }, "<leader>cf", function()
   require("conform").format({ async = true, lsp_format = "fallback" })
-end, { desc = "Bicimlendir (clang-format / LSP); secimde sadece secim" })
-map("n", "<leader>u", "<cmd>UndotreeToggle<CR>", { desc = "Undo agaci" })
+end, { desc = "Format (clang-format / LSP); only the selection in visual mode" })
+map("n", "<leader>u", "<cmd>UndotreeToggle<CR>", { desc = "Undo tree" })
 
 return {
   { "stevearc/conform.nvim", lazy = true, opts = {

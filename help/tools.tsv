@@ -1,0 +1,34 @@
+# name<TAB>description<TAB>example (optional). One line per package in tools/install-tools.sh; tests keep both in sync.
+cppcheck	Static analysis for C/C++, needs no build	cppcheck --enable=warning,performance --inline-suppr .
+clang-tidy	Compiler-based C/C++ analysis (needs compile_commands.json)	clang-tidy -p . src/main.c
+clang-format	C/C++ code formatter (Neovim <leader>cf)	clang-format -i src/main.c
+bear	Generates compile_commands.json from a build	bear -- make
+git-delta	Syntax-highlighted git diff, show and log (wired in as git pager)	git diff
+fd-find	Fast file finder, installed as fd (also feeds fzf)	fd -e c main
+bat	Cat with syntax highlighting, installed as bat (Ctrl-T preview)	bat src/main.c
+eza	ls replacement that can draw a tree (alias lt)	lt
+zoxide	Jump to frequently used directories	z linux-configs
+direnv	Loads and unloads a .envrc when you enter or leave a directory	direnv allow
+shellcheck	Static analysis for shell scripts	shellcheck -x script.sh
+ltrace	Trace library calls of a program	ltrace ./program
+rr	Record and replay debugging (needs hardware counters, may not work in a VM)	rr record ./program && rr replay
+lcov	Code coverage report from gcov data	lcov --capture --directory . --output-file cov.info
+doxygen	Generate documentation from source comments	doxygen Doxyfile
+tshark	Command-line Wireshark: analyse capture files	tshark -r x.pcap -Y dns -T fields -e dns.qry.name
+binwalk	Analyse and extract firmware images	binwalk -e firmware.bin
+qemu-user-static	Run ARM/MIPS binaries on x86	qemu-arm-static -L <sysroot> ./program
+tio	Serial console with auto-reconnect and logging	tio /dev/serial/by-id/usb-...
+lnav	Log file navigator: timestamps, filters, highlighting	lnav console.log
+moreutils	Extra utilities, notably ts (prefix lines with a timestamp)	cmd | ts '%H:%M:%S'
+mosh	Remote shell that survives disconnects and roaming	mosh user@host
+sshfs	Mount a remote directory over SSH	sshfs user@host:/dir /mnt/dir
+tig	Text-mode git history, blame and staging browser	tig
+pre-commit	Framework for git commit hooks (this repo uses core.hooksPath instead)	pre-commit run --all-files
+entr	Run a command when files change	ls *.c | entr -c make test
+hyperfine	Benchmark commands with statistics	hyperfine 'make -j8'
+ncdu	Interactive disk usage browser	ncdu /data
+duf	Free-space overview per filesystem	duf
+just	Command runner with a simple Justfile syntax	just build
+tmuxp	Define tmux layouts in YAML	tmuxp load session.yaml
+httpie	Readable HTTP client	http GET example.com
+tldr	Short, practical examples for commands	tldr tar

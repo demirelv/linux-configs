@@ -16,6 +16,7 @@ Icindekiler: temel ayarlar, eklentiler (resurrect/continuum), nvim-tmux gezinti
 | `Prefix` + `h/j/k/l`, `H/J/K/L` | Pane'e gec, pane boyutu |
 | `Prefix` + `Ctrl-v` | Copy mode (vi tuslari: `v` sec, `y` panoya kopyala) |
 | `Prefix` + `P`, sag tik | Sistem panosundan yapistir |
+| `Prefix` + `F1` | `lc-help` popup'i (komut ve kisayol arama) |
 | `escape-time` | 10 ms (Neovim'de `Esc` gecikmesin) |
 | Pencere/pane numarasi | 1'den baslar, pencere kapaninca yeniden numaralanir |
 

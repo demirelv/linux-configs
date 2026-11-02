@@ -33,5 +33,6 @@ oturumlarina dokunmaz. `shellcheck` kurulu degilse o adim uyarip atlanir (`sudo 
 | `tests/hook_test.sh` | pre-commit kancasi (gercek `git commit` ile, kanca bozulunca kirmizi olur) |
 | `tests/tools_test.sh` | `tools/install-tools.sh` (sahte apt ile: atlama, kurulu olani kurmama, `fd`/`bat` baglari, delta) |
 | `tests/docs_test.sh` | Dokuman baglantilari, INDEX tamligi, kisayol/arac listelerinin koddan sapmasi |
+| `tests/lc_help_test.sh` | `lc-help` indeksi kaynaklarla uyumlu mu, arama, bayat indeks, `fzf` yolu (pty) |
 | `tests/tmux_plugins_test.sh` | tmux config, resurrect/continuum, nvim-tmux gezinti (ag gerekir) |
 | `nvim/tests/run.sh` | Taze kurulumda Neovim: tus cakismasi, eklentiler, LSP, biçimlendirme, `:Make`, treesitter (ag gerekir) |

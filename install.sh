@@ -85,6 +85,8 @@ if [ "$WITH_DOTFILES" -eq 1 ]; then
     # Sembolik bag: repo'daki dosyayi duzenlemek $HOME'u da gunceller, ayrisma olmaz.
     link_file "$REPO_DIR/bash/.bashrc" "$HOME/.bashrc"
     link_file "$REPO_DIR/tmux/.tmux.conf" "$HOME/.tmux.conf"
+    # lc-help: komut/kisayol arama (kabukta Ctrl-x h, tmux Prefix F1). ~/.local/bin PATH'te olmali.
+    link_file "$REPO_DIR/bin/lc-help" "$HOME/.local/bin/lc-help"
 
     # .gitconfig KOPYALANIR (baglanmaz): icindeki kullanici kimligi makineye gore degisebilir.
     stamp="$(date +%Y%m%d-%H%M%S)"

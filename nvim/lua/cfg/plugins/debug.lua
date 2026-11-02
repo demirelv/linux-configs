@@ -2,15 +2,15 @@
 local map = vim.keymap.set
 local function dap() return require("dap") end
 
-map("n", "<leader>db", function() dap().toggle_breakpoint() end, { desc = "Breakpoint ac/kapat" })
-map("n", "<leader>dc", function() dap().continue() end, { desc = "Debug baslat / devam et" })
-map("n", "<leader>do", function() dap().step_over() end, { desc = "Debug: ustunden gec" })
-map("n", "<leader>di", function() dap().step_into() end, { desc = "Debug: icine gir" })
-map("n", "<leader>dO", function() dap().step_out() end, { desc = "Debug: disina cik" })
-map("n", "<leader>dx", function() dap().terminate() end, { desc = "Debug oturumunu sonlandir" })
-map("n", "<leader>dr", function() dap().repl.toggle() end, { desc = "Debug REPL ac/kapat" })
+map("n", "<leader>db", function() dap().toggle_breakpoint() end, { desc = "Toggle breakpoint" })
+map("n", "<leader>dc", function() dap().continue() end, { desc = "Start / continue debugging" })
+map("n", "<leader>do", function() dap().step_over() end, { desc = "Debug: step over" })
+map("n", "<leader>di", function() dap().step_into() end, { desc = "Debug: step into" })
+map("n", "<leader>dO", function() dap().step_out() end, { desc = "Debug: step out" })
+map("n", "<leader>dx", function() dap().terminate() end, { desc = "Terminate the debug session" })
+map("n", "<leader>dr", function() dap().repl.toggle() end, { desc = "Toggle the debug REPL" })
 map({ "n", "x" }, "<leader>dv", function() require("dap.ui.widgets").hover() end,
-  { desc = "Degiskenin degerini goster" })
+  { desc = "Show the value of the variable" })
 
 return {
   { "mfussenegger/nvim-dap", lazy = true, config = function()
