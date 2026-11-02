@@ -4,11 +4,13 @@ Kisisel Linux dotfile'lari ve kurulum script'leri (Ubuntu / GNOME).
 
 | Klasor | Icerik |
 |---|---|
-| `bash/.bashrc` | Shell ayarlari, ticket yardimcilari, tmux fonksiyonlari (`tm`, `tmw`, `tmj`) |
-| `tmux/.tmux.conf` | Prefix `Ctrl-a`, vi copy-mode, pano entegrasyonu |
+| `bash/.bashrc` | Shell ayarlari, ticket yardimcilari, tmux fonksiyonlari (`tm`, `tmw`, `tmj`) ve Tab tamamlamasi |
+| `tmux/.tmux.conf` | Prefix `Ctrl-a`, vi copy-mode, pano entegrasyonu, oturum kalicligi (resurrect + continuum) |
 | `git/.gitconfig` | Alias'lar (`sa`, `bl`, `v`, `va`, `vm` ...) |
 | `nvim/` | Neovim C/C++ ortami (`init.lua` + kurulum) |
 | `vim/` | Eski vim ortami (Vundle). Ana kurulum cagirmaz, elle calistirilir |
+| `lib/link.sh` | Kurulum yardimcilari (`link_file`, `clone_pinned`) |
+| `tests/`, `nvim/tests/`, `check.sh` | Testler ve tek komutlu kontrol |
 
 ## Kurulum
 
@@ -18,8 +20,36 @@ Kisisel Linux dotfile'lari ve kurulum script'leri (Ubuntu / GNOME).
 ./install.sh --no-dotfiles      # dotfile kopyalamayi atla
 ```
 
-`install.sh` dotfile'lari `$HOME` altina **kopyalar**; farkli bir dosya varsa `.bak.<tarih>` yedegi alir.
-Makineye ozel satirlar (nvm, takma adlar vb.) olan bir `~/.bashrc` uzerine yazilirsa yedekten geri tasinmalidir.
+Dotfile'lar `$HOME` altina **sembolik bagla** kurulur (`~/.bashrc`, `~/.tmux.conf`, `~/.config/nvim/init.lua`):
+repo'daki dosyayi duzenlemek canli ayari da degistirir, ikisi ayrismaz. Hedefte baska bir dosya varsa
+silinmez, `.bak.<tarih>` adiyla yana tasinir. `~/.gitconfig` ise **kopyalanir**, cunku icindeki kullanici
+kimligi makineye gore degisebilir.
+
+### Makineye ozel ayarlar: `~/.bashrc.local`
+
+Bu repo **public**. PATH, nvm, bun, hesap takma adlari, kayit defteri adresleri gibi makineye ozel
+satirlar `~/.bashrc.local` dosyasina yazilir; `.bashrc` sonunda onu otomatik okur ve dosya repo'ya girmez.
+Ornek (mod `600` onerilir):
+
+```bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+### tmux eklentileri
+
+`install.sh`, `tmux-resurrect` ve `tmux-continuum` eklentilerini `~/.tmux/plugins` altina kurar.
+Kod her tmux acilisinda calistigi icin ikisi de **sabit commit**'e sabitlenir (`install.sh` icinde);
+surum yukseltmek icin commit'i bilincli degistir. Eklentiler yoksa `.tmux.conf` sessizce atlar.
+
+| Tus | Ne yapar |
+|---|---|
+| `Prefix` + `Ctrl-s` | Oturumlari simdi kaydet |
+| `Prefix` + `Ctrl-r` | Son kaydi geri yukle |
+
+`continuum` periyodik kaydeder ve tmux sunucusu acilirken son kaydi geri yukler. Otomatik kaydi yalnizca
+makinede baska tmux sureci yokken baslatir; ilk acilista kaydin olusmasi bu yuzden gecikebilir.
 
 ## tmux fonksiyonlari
 
@@ -28,6 +58,8 @@ Makineye ozel satirlar (nvm, takma adlar vb.) olan bir `~/.bashrc` uzerine yazil
 | `tm [isim]` | Session'a baglan ya da olustur (varsayilan `main`). tmux icindeyse `switch-client` ile gecer. |
 | `tmw kaynak [hedef]` | Baska session'daki pencereyi mevcut (ya da hedef) session'a tasi. Ornek: `tmw work:2` |
 | `tmj [kaynak] [hedef]` | Baska session'daki pencereyi mevcut pencereye pane olarak birlestir. Parametresiz: tum pencereler arasindan sectirir (fzf, yoksa numarali menu). |
+
+Uc komutta da `Tab` tamamlamasi vardir: `tm` session adlarini, `tmw`/`tmj` `session:pencere` adaylarini verir.
 
 ## Neovim (`nvim/init.lua`)
 
@@ -57,14 +89,23 @@ Popup ile arama (Telescope, ortada, onizlemeli):
 `:Rg <aranan> [klasor]` sonuclari quickfix'e yazar; `nvim-bqf` onizleme gosterir.
 `<C-q>` quickfix'i acar/kapatir.
 
+Tamamlama: LSP baglaninca yazdikca otomatik liste acilir (Neovim'in yerlesik ozelligi, ek eklenti yok).
+`<C-n>`/`<C-p>` gez, `<C-y>` kabul et, `<C-e>` kapat, `<C-Space>` elle tetikle. C/C++ projelerinde `clangd`
+`compile_commands.json` ister; Makefile projeleri icin `bear -- make` ile uretilir.
+
 Notlar: `gr` bilerek bagli degil (Neovim varsayilani `grr` referanslar, `grn` yeniden adlandir,
 `gra` code action). `<C-v>` blok secimi icin birakildi; panoya yapistirmak `<leader>p`.
 
-Test (taze kurulum, gecici dizinde; ag gerekir, gercek config'e dokunmaz):
+## Testler
 
 ```bash
-bash nvim/tests/run.sh
+./check.sh          # sozdizimi, shellcheck, kabuk testleri, tmux eklenti testi, nvim testi
+./check.sh --fast   # ag gerektiren testleri (tmux eklentileri, nvim) atla
 ```
+
+Testler gecici `HOME`, gecici tmux soketi ve gecici XDG dizinleri kullanir; gercek ayarlara ve acik tmux
+oturumlarina dokunmaz. `shellcheck` kurulu degilse o adim uyarip atlanir (`sudo apt install shellcheck`;
+`install.sh` de kurar).
 
 ## Not
 
