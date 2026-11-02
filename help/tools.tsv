@@ -47,7 +47,6 @@ difftastic	Structural diff that understands syntax (use as git difftool)	git -c 
 ast-grep	Search and rewrite code by syntax tree (command is sg or ast-grep)	ast-grep -p 'foo($A)' -l c	extra
 procs	ps replacement: colour, tree, search	procs --tree	extra
 tokei	Count lines of code per language	tokei src	extra
-jless	Read JSON in a terminal with folding and search	curl -s URL | jless	extra
 xh	Fast httpie-like HTTP client	xh get example.com	extra
 rg	Show line numbers	rg -n PATTERN	usage
 rg	Only one file type (c, py, ...)	rg -t c PATTERN	usage
@@ -113,7 +112,6 @@ procs	Search processes by name	procs NAME	usage
 procs	Process tree	procs --tree	usage
 tokei	Lines per language	tokei	usage
 tokei	Sorted by lines	tokei -s lines	usage
-jless	View a JSON file	jless FILE.json	usage
 xh	POST with form fields	xh post URL a=b	usage
 lc-doctor	Check this machine against linux-configs (links, programs, plugins, missing tools)	lc-doctor -q	usage
 lc-issue-hook	Require an Issue: KEY-123 line in commit messages of a repo (Gerrit)	lc-issue-hook install	usage

@@ -98,27 +98,26 @@ rr record ./program && rr replay                   # kaydet, geri sararak izle
 ## apt'te olmayan araclar
 
 `tools/install-tools.sh` bunlari kurmaz; `curl | bash` yerine crates.io'dan, surum sabitli ve kilit dosyasiyla
-kurulur (`--locked`). Rust gerekir (`cargo`); derleme birkac dakika surer. Surumler, apt'teki rustc 1.88 ile derlenen en yeni
-surumlerdir (2026-11-02'de crates.io'dan bakildi); daha yeni surumler daha yeni rustc ister. Hepsini birden:
+kurulur (`--locked`). Rust gerekir (`cargo`); derleme birkac dakika surer. Surumler, bu makinede (apt'teki rustc 1.88) gercekten derlenen en
+yeni surumlerdir (2026-11-02'de denendi); daha yeni surumler daha yeni rustc ister. Hepsini birden:
 `tools/install-tools.sh extra` (ya da `./install.sh --with-tools`); kurulu olani atlar, biri basarisiz olursa digerlerine devam eder.
 Her biri `lc-help tool <ad>` ile aranabilir. Hepsi kuruluysa `.bashrc` kendiliginden baglar (yukaridaki tablo).
 
 | Arac | Ne ise yarar | Kurulum |
 |---|---|---|
-| `starship` | Hizli prompt | `cargo install --locked starship --version 1.24.1` |
+| `starship` | Hizli prompt | `cargo install --locked starship --version 1.24.0` |
 | `atuin` | Sqlite gecmis; `Ctrl-r` dizin/cikis koduyla arar | `cargo install --locked atuin --version 18.8.0` |
 | `mise` | Dil surumleri, ortam degiskenleri, gorevler | `cargo install --locked mise` (rustc 1.95+ ister; apt'teki 1.88 yetmez, betik kurmaz. Kendi kurulum yolu: mise.jdx.dev) |
 | `uv` | Cok hizli Python paket/venv yoneticisi | `pipx install uv` (Ubuntu'da `pip install --user` engelli) |
-| `watchexec` | Dosya degisince komut; `entr`'den rahat | `cargo install --locked watchexec-cli --version 2.8.0` |
-| `dust` | Disk kullanimini cubukla gosterir | `cargo install --locked du-dust --version 1.2.7` |
+| `watchexec` | Dosya degisince komut; `entr`'den rahat | `cargo install --locked watchexec-cli --version 2.4.3` |
+| `dust` | Disk kullanimini cubukla gosterir | `cargo install --locked du-dust --version 1.2.5` |
 | `difftastic` | Sozdizimine duyarli diff | `cargo install --locked difftastic --version 0.72.0` |
 | `ast-grep` | Sozdizimi agacina gore ara/degistir (`sg`) | `cargo install --locked ast-grep --version 0.44.1` |
 | `procs` | `ps` yerine: renk, agac, arama | `cargo install --locked procs --version 0.14.12` |
 | `tokei` | Dile gore kod satiri sayar | `cargo install --locked tokei --version 15.0.0` |
-| `jless` | Terminalde JSON gezgini | `cargo install --locked jless --version 0.9.0` |
 | `xh` | Hizli httpie benzeri HTTP istemcisi | `cargo install --locked xh --version 0.26.3` |
 
-Kurmadan once crate'in sahibine ve son surum tarihine bak (supply-chain). `glow` ve `jira-cli` Go ile yazili;
+Kurmadan once crate'in sahibine ve son surum tarihine bak (supply-chain). `jless` kurulmuyor (derlemek icin `libxcb-*-dev` paketleri gerekir). `glow` ve `jira-cli` Go ile yazili;
 bilerek eklenmedi.
 
 Git icin `git/.gitconfig` artik `pull.rebase`, `fetch.prune`, `rerere`, `diff.algorithm=histogram` ve

@@ -104,7 +104,7 @@ declare -A CMD=(
     [tig]=tig [pre-commit]=pre-commit [entr]=entr [hyperfine]=hyperfine [ncdu]=ncdu [duf]=duf [just]=just
     [tmuxp]=tmuxp [httpie]=http [tldr]=tldr [ripgrep]=rg [git-absorb]=git-absorb [gping]=gping
     [starship]=starship [atuin]=atuin [mise]=mise [uv]=uv [watchexec]=watchexec [dust]=dust
-    [difftastic]=difft [ast-grep]="ast-grep sg" [procs]=procs [tokei]=tokei [jless]=jless [xh]=xh
+    [difftastic]=difft [ast-grep]="ast-grep sg" [procs]=procs [tokei]=tokei [xh]=xh
 )
 apt_missing=(); extra_missing=(); have=0
 while IFS=$'\t' read -r name _ _ kind; do

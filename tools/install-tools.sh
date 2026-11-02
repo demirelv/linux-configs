@@ -27,18 +27,18 @@ declare -A TOOL_GROUPS=(
 ALL_GROUPS=(core c-debug net git misc dev)
 
 # apt'te olmayan araclar: komut|crate|surum (docs/araclar.md ile ayni; tests/docs_test.sh karsilastirir).
-# Surumler rustc 1.88 ile derlenen en yeni surumlerdir (apt'teki Rust); daha yeni surum daha yeni rustc ister.
+# Surumler bu makinede (rustc 1.88, apt'teki Rust) gercekten derlenen en yeni surumlerdir: crate'in kendi rust-version
+# alani yetmez, bagimliliklari daha yeni rustc isteyebilir. jless yok: X11 icin libxcb-*-dev (sudo) ister.
 # mise burada YOK: en eski kurulabilir surumu bile rustc 1.95 ister (docs/araclar.md).
 EXTRA_TOOLS=(
-    "starship|starship|1.24.1"
+    "starship|starship|1.24.0"
     "atuin|atuin|18.8.0"
-    "watchexec|watchexec-cli|2.8.0"
-    "dust|du-dust|1.2.7"
+    "watchexec|watchexec-cli|2.4.3"
+    "dust|du-dust|1.2.5"
     "difft|difftastic|0.72.0"
     "ast-grep|ast-grep|0.44.1"
     "procs|procs|0.14.12"
     "tokei|tokei|15.0.0"
-    "jless|jless|0.9.0"
     "xh|xh|0.26.3"
 )
 want_extra=0
