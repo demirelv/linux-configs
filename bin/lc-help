@@ -59,7 +59,7 @@ entries_nvim() {
 entries_tools() {
     local f="$REPO/help/tools.tsv"
     [ -f "$f" ] || return 0
-    awk -F'\t' '!/^#/ && NF >= 2 { printf "tool\t%s\t%s\ttools/install-tools.sh\t%s\n", $1, $2, $3 }' "$f"
+    awk -F'\t' '!/^#/ && NF >= 2 { printf "tool\t%s\t%s\t%s\t%s\n", $1, $2, ($4 == "extra" ? "docs/araclar.md (not in apt)" : "tools/install-tools.sh"), $3 }' "$f"
 }
 
 build_index() {

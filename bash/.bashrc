@@ -324,7 +324,11 @@ complete -F _tmj_complete tmj
 # --- Istege bagli gelistirici araclari: KURULUYSA etkinlesir, yoksa sessizce atlanir ---
 # Kurulum: tools/install-tools.sh. Ne ise yaradiklari: `yardim araclar`.
 # Bu blok ~/.bashrc.local'dan SONRA gelir: ~/.local/bin PATH'e orada eklenir (fd/bat baglari orada).
+case ":$PATH:" in *":$HOME/.cargo/bin:"*) ;; *) [ -d "$HOME/.cargo/bin" ] && PATH="$HOME/.cargo/bin:$PATH" ;; esac   # cargo install ile kurulanlar
 if command -v zoxide >/dev/null 2>&1; then eval "$(zoxide init bash)"; fi   # z <klasor>, zi
+if command -v mise >/dev/null 2>&1; then eval "$(mise activate bash)"; fi   # dil surumleri (node, python ...)
+if command -v atuin >/dev/null 2>&1; then eval "$(atuin init bash)"; fi    # Ctrl-r: dizin/cikis kodu ile gecmis arama
+if command -v starship >/dev/null 2>&1; then eval "$(starship init bash)"; fi   # prompt (en sonda: PROMPT_COMMAND'i sarar)
 if command -v direnv >/dev/null 2>&1; then eval "$(direnv hook bash)"; fi   # klasore girince .envrc yukler
 if command -v fd >/dev/null 2>&1; then                                       # fzf dosya listesi: hizli, .gitignore'a uyar
     export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'

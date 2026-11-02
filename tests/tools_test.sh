@@ -46,6 +46,7 @@ out="$(run --dry-run core)"
 ok "dry-run: kurulacaklari listeler, bir sey kurmaz" bash -c '[[ "$1" == *"kurulacak    : cppcheck"* ]] && [ ! -s "$2" ]' _ "$out" "$STUB_LOG"
 ok "dry-run: varsayilan gruplar core + git" has "$(run --dry-run)" "Gruplar: core git"
 ok "bilinmeyen grup hata verir" not bash "$REPO/tools/install-tools.sh" xyz
+ok "dev grubu ripgrep git-absorb gping kurar" has "$(run --dry-run dev)" "kurulacak    : ripgrep git-absorb gping"
 
 printf 'eza\n' > "$STUB_MISSING"; printf 'bat\n' > "$STUB_INSTALLED"
 out="$(run --dry-run core)"

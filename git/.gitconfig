@@ -44,3 +44,13 @@
 	vm = "!f() { git commit --author=\"Veli Demirel <demirel.veli@yahoo.com>\" -m \"$1\"; }; f"
 [core]
 	editor = nvim
+[pull]
+	rebase = true
+[fetch]
+	prune = true
+[rerere]
+	enabled = true
+[diff]
+	algorithm = histogram
+[merge]
+	conflictstyle = zdiff3

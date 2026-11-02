@@ -59,6 +59,13 @@ undoc=""
 for p in $pk; do grep -qF "\`$p\`" docs/araclar.md || undoc="$undoc $p"; done
 ok "betikteki tum paketler araclar.md'de var${undoc:+ (eksik:$undoc)}" test -z "$undoc"
 
+# 4b) tools.tsv'deki apt-disi (extra) araclar araclar.md'de kurulum satiriyla var
+noextra=""
+for p in $(awk -F'\t' '!/^#/ && $4 == "extra" { print $1 }' help/tools.tsv); do
+    grep -qE "^\| \`$p\` .*(cargo install|pipx install)" docs/araclar.md || noextra="$noextra $p"
+done
+ok "apt-disi araclarin kurulum satiri araclar.md'de var${noextra:+ (eksik:$noextra)}" test -z "$noextra"
+
 # 5) dokumanda gecen `<leader>xx` kisayollari gercekten tanimli (docs/nvim.md, docs/ozet.md)
 lost=""
 for key in $(grep -ohE '`<leader>[A-Za-z?]+`' docs/nvim.md docs/ozet.md | tr -d '`' | sort -u); do

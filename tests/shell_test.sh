@@ -188,20 +188,28 @@ mkdir -p "$fh2/.local/bin"
 printf '#!/bin/sh\n[ "$1" = init ] && echo "export ZOXIDE_STUB=1"\n' > "$fh2/.local/bin/zoxide"
 printf '#!/bin/sh\n[ "$1" = hook ] && echo "export DIRENV_STUB=1"\n' > "$fh2/.local/bin/direnv"
 for t in fd bat eza; do printf '#!/bin/sh\n' > "$fh2/.local/bin/$t"; done
+printf '#!/bin/sh\n[ "$1" = activate ] && echo "export MISE_STUB=1"\n' > "$fh2/.local/bin/mise"
+printf '#!/bin/sh\n[ "$1" = init ] && echo "export ATUIN_STUB=1"\n' > "$fh2/.local/bin/atuin"
+printf '#!/bin/sh\n[ "$1" = init ] && echo "export STARSHIP_STUB=1"\n' > "$fh2/.local/bin/starship"
+mkdir -p "$fh2/.cargo/bin"; printf '#!/bin/sh\n' > "$fh2/.cargo/bin/rg-stub"; chmod +x "$fh2/.cargo/bin/rg-stub"
 chmod +x "$fh2/.local/bin"/*
 echo 'export PATH="$HOME/.local/bin:$PATH"' > "$fh2/.bashrc.local"
-integ="$(HOME="$fh2" bash -ic 'echo "Z=${ZOXIDE_STUB:-} D=${DIRENV_STUB:-} F=${FZF_DEFAULT_COMMAND:-} B=${FZF_CTRL_T_OPTS:-} L=$(alias lt 2>/dev/null)"' 2>/dev/null | grep -o 'Z=.*')"
+integ="$(HOME="$fh2" bash -ic 'echo "Z=${ZOXIDE_STUB:-} D=${DIRENV_STUB:-} F=${FZF_DEFAULT_COMMAND:-} B=${FZF_CTRL_T_OPTS:-} L=$(alias lt 2>/dev/null) M=${MISE_STUB:-} A=${ATUIN_STUB:-} S=${STARSHIP_STUB:-} C=$(command -v rg-stub)"' 2>/dev/null | grep -o 'Z=.*')"
 okc "zoxide kuruluysa baslatilir (PATH .bashrc.local'dan)" has "$integ" "Z=1"
 okc "direnv kuruluysa baglanir" has "$integ" "D=1"
 okc "fd varsa fzf dosya listesi fd ile" has "$integ" "F=fd --type f"
 okc "bat varsa Ctrl-T onizlemesi bat ile" has "$integ" "bat --color=always"
 okc "eza varsa lt takma adi" has "$integ" "eza --tree"
-rm -f "$fh2/.bashrc.local"; rm -rf "$fh2/.local"
+okc "mise kuruluysa etkinlesir" has "$integ" "M=1"
+okc "atuin kuruluysa baslatilir" has "$integ" "A=1"
+okc "starship kuruluysa baslatilir" has "$integ" "S=1"
+okc "$HOME/.cargo/bin varsa PATH'e girer" has "$integ" ".cargo/bin/rg-stub"
+rm -f "$fh2/.bashrc.local"; rm -rf "$fh2/.local" "$fh2/.cargo"
 
 # araclar hic yokken .bashrc hatasiz acilir (sistemde bunlar kuruluysa test anlamsiz: atla)
 fh3="$tmp/fh3"; mkdir -p "$fh3"; ln -s "$REPO/bash/.bashrc" "$fh3/.bashrc"
-if PATH=/usr/bin:/bin bash -c 'command -v zoxide direnv fd bat eza >/dev/null 2>&1'; then
-    echo "SKIP arac-yok testi (sistem yollarinda zoxide/direnv/fd/bat/eza var)"
+if PATH=/usr/bin:/bin bash -c 'command -v zoxide direnv fd bat eza mise atuin starship >/dev/null 2>&1'; then
+    echo "SKIP arac-yok testi (sistem yollarinda zoxide/direnv/fd/bat/eza/mise/atuin/starship var)"
 else
     err="$(HOME="$fh3" PATH=/usr/bin:/bin bash -ic 'true' 2>&1 >/dev/null | grep -iE 'not found|No such file|command' || true)"
     okc "araclar yokken .bashrc sessiz acilir${err:+ ($err)}" test -z "$err"

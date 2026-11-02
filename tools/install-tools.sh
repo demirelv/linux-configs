@@ -2,7 +2,7 @@
 # Gelistirici araclarini gruplar halinde kurar (apt). Kullanim:
 #   tools/install-tools.sh [--dry-run] [grup...]    # varsayilan gruplar: core git
 #   tools/install-tools.sh all                      # tum gruplar
-# Gruplar: core c-debug net git misc   (icerikleri ve ne ise yaradiklari: docs/araclar.md)
+# Gruplar: core c-debug net git misc dev   (icerikleri ve ne ise yaradiklari: docs/araclar.md)
 #
 # - apt'te olmayan paketi atlar (Ubuntu surumune gore degisir), zaten kurulu olani tekrar kurmaz.
 # - Ubuntu'nun fdfind/batcat adlarini ~/.local/bin altinda fd/bat olarak baglar.
@@ -20,8 +20,9 @@ declare -A TOOL_GROUPS=(
     [net]="tshark binwalk qemu-user-static tio lnav moreutils mosh sshfs"
     [git]="tig pre-commit"
     [misc]="entr hyperfine ncdu duf just tmuxp httpie tldr"
+    [dev]="ripgrep git-absorb gping"
 )
-ALL_GROUPS=(core c-debug net git misc)
+ALL_GROUPS=(core c-debug net git misc dev)
 
 dry=0
 groups=()
@@ -30,7 +31,7 @@ for a in "$@"; do
         --dry-run) dry=1 ;;
         -h|--help) sed -n '2,10p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         all) groups=("${ALL_GROUPS[@]}") ;;
-        *) if [ -n "${TOOL_GROUPS[$a]+x}" ]; then groups+=("$a"); else echo "Bilinmeyen grup: $a (core c-debug net git misc all)" >&2; exit 1; fi ;;
+        *) if [ -n "${TOOL_GROUPS[$a]+x}" ]; then groups+=("$a"); else echo "Bilinmeyen grup: $a (core c-debug net git misc dev all)" >&2; exit 1; fi ;;
     esac
 done
 [ ${#groups[@]} -gt 0 ] || groups=(core git)
@@ -80,4 +81,4 @@ fi
 
 echo
 echo "Tamam. Yeni bir kabuk ac (zoxide, direnv ve fzf entegrasyonlari .bashrc'de kurulu araclar bulununca etkinlesir)."
-echo "apt'te olmayan araclar (starship, atuin, glow, watchexec, jira-cli, tokei): docs/araclar.md"
+echo "apt'te olmayan araclar (starship, atuin, mise, uv, watchexec, dust, difftastic, ast-grep ...): docs/araclar.md"

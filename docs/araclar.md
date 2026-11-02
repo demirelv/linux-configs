@@ -52,6 +52,9 @@ Betik yalnizca apt'te bulunan ve kurulu olmayan paketleri kurar; olmayani atlar 
 | misc | `just` | `Makefile`'dan okunur komut sablonlari |
 | misc | `tmuxp` | tmux duzenlerini YAML ile tanimlar |
 | misc | `httpie`, `tldr` | Okunur HTTP istemcisi; kisa komut orneklerini gosterir |
+| dev | `ripgrep` | Hizli `grep`, `.gitignore`'a uyar (Telescope canli arama bunu kullanir) |
+| dev | `git-absorb` | Staged degisiklikleri dogru eski commit'lere fixup olarak dagitir: `git absorb --and-rebase` |
+| dev | `gping` | Canli grafikli `ping` |
 
 ## Otomatik entegrasyonlar
 
@@ -64,6 +67,10 @@ Arac kuruluysa `.bashrc` (ya da Git) onu kendiliginden kullanir, kurulu degilse 
 | `fd` | `fzf` dosya listesi (`Ctrl-T`) `fd` ile uretilir: hizli, `.gitignore`'a uyar |
 | `bat` | `Ctrl-T` dosya secerken renkli onizleme |
 | `eza` | `lt` takma adi (2 seviye agac) |
+| `mise` | `mise activate bash`: dil surumleri (node, python) klasore gore degisir |
+| `atuin` | `Ctrl-r` gecmis aramasini devralir (dizin, cikis kodu, sure) |
+| `starship` | Prompt'u degistirir (git dali, venv, cikis kodu, komut suresi) |
+| `~/.cargo/bin` | Varsa `PATH`'e eklenir (`cargo install` ile kurulanlar bulunur) |
 | `git-delta` | `~/.gitconfig.delta` kopyalanir ve `~/.gitconfig` icinden include edilir (pager, `zdiff3` cakisma stili, tasinan satir rengi) |
 
 Entegrasyonlar `~/.bashrc.local`'dan sonra yuklenir; arac `~/.local/bin` altindaysa bulunur.
@@ -88,8 +95,29 @@ rr record ./program && rr replay                   # kaydet, geri sararak izle
 
 `jq`, `htop`, `btop`, `socat`, `nc`, `tcpdump`, `strace`, `perf`, `bpftrace`, `gh`, `lazygit`, `ccache`, `valgrind`.
 
-## apt'te olmayan araclar (bilerek kurulmuyor)
+## apt'te olmayan araclar
 
-`starship` (prompt), `atuin` (gecmis aramasi), `glow` (Markdown okuyucu), `watchexec` (`entr`'in gelismisi),
-`jira-cli`, `tokei` (kod satiri sayaci). Bunlar `curl | bash` ya da GitHub release indirmesi ister; her biri
-icin once sahip, lisans, bakim durumu ve kurulum betigi kontrol edilmeli. Ihtiyac olursa tek tek, kontrol ederek kur.
+`tools/install-tools.sh` bunlari kurmaz; `curl | bash` yerine crates.io'dan, surum sabitli ve kilit dosyasiyla
+kurulur (`--locked`). Rust gerekir (`cargo`); derleme birkac dakika surer. Surumler 2026-11-02'de crates.io'daydi.
+Her biri `lc-help tool <ad>` ile aranabilir. Hepsi kuruluysa `.bashrc` kendiliginden baglar (yukaridaki tablo).
+
+| Arac | Ne ise yarar | Kurulum |
+|---|---|---|
+| `starship` | Hizli prompt | `cargo install --locked starship --version 1.27.0` |
+| `atuin` | Sqlite gecmis; `Ctrl-r` dizin/cikis koduyla arar | `cargo install --locked atuin --version 18.24.4` |
+| `mise` | Dil surumleri, ortam degiskenleri, gorevler | `cargo install --locked mise --version 2026.10.25` |
+| `uv` | Cok hizli Python paket/venv yoneticisi | `pipx install uv` (Ubuntu'da `pip install --user` engelli) |
+| `watchexec` | Dosya degisince komut; `entr`'den rahat | `cargo install --locked watchexec-cli --version 2.8.0` |
+| `dust` | Disk kullanimini cubukla gosterir | `cargo install --locked du-dust --version 1.2.7` |
+| `difftastic` | Sozdizimine duyarli diff | `cargo install --locked difftastic --version 0.72.0` |
+| `ast-grep` | Sozdizimi agacina gore ara/degistir (`sg`) | `cargo install --locked ast-grep --version 0.51.1` |
+| `procs` | `ps` yerine: renk, agac, arama | `cargo install --locked procs --version 0.14.12` |
+| `tokei` | Dile gore kod satiri sayar | `cargo install --locked tokei --version 15.0.0` |
+| `jless` | Terminalde JSON gezgini | `cargo install --locked jless --version 0.9.0` |
+| `xh` | Hizli httpie benzeri HTTP istemcisi | `cargo install --locked xh --version 0.26.3` |
+
+Kurmadan once crate'in sahibine ve son surum tarihine bak (supply-chain). `glow` ve `jira-cli` Go ile yazili;
+bilerek eklenmedi.
+
+Git icin `git/.gitconfig` artik `pull.rebase`, `fetch.prune`, `rerere`, `diff.algorithm=histogram` ve
+`merge.conflictstyle=zdiff3` ayarlarini tasir (kurulum gerektirmez).

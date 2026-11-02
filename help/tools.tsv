@@ -1,4 +1,5 @@
-# name<TAB>description<TAB>example (optional). One line per package in tools/install-tools.sh; tests keep both in sync.
+# name<TAB>description<TAB>example (optional)<TAB>extra (optional). A row without the 4th column is an apt package of
+# tools/install-tools.sh (tests keep both in sync); an 'extra' row is not in apt, install per docs/araclar.md.
 cppcheck	Static analysis for C/C++, needs no build	cppcheck --enable=warning,performance --inline-suppr .
 clang-tidy	Compiler-based C/C++ analysis (needs compile_commands.json)	clang-tidy -p . src/main.c
 clang-format	C/C++ code formatter (Neovim <leader>cf)	clang-format -i src/main.c
@@ -32,3 +33,18 @@ just	Command runner with a simple Justfile syntax	just build
 tmuxp	Define tmux layouts in YAML	tmuxp load session.yaml
 httpie	Readable HTTP client	http GET example.com
 tldr	Short, practical examples for commands	tldr tar
+ripgrep	Fast recursive grep that respects .gitignore (Telescope live grep uses it)	rg -n 'TODO' src/
+git-absorb	Turns staged changes into fixup commits for the right earlier commits	git absorb --and-rebase
+gping	Ping with a live graph	gping 8.8.8.8
+starship	Fast cross-shell prompt: git branch, venv, exit code, command time	starship preset -l	extra
+atuin	Shell history in sqlite: Ctrl-r searches by directory, exit code and duration	atuin search --cwd . make	extra
+mise	One tool for language versions (node, python, ...), env vars and tasks	mise use node@22	extra
+uv	Very fast Python package, venv and project manager	uv venv && uv pip install requests	extra
+watchexec	Run a command when files change (smarter entr: globs, .gitignore)	watchexec -e c,h -- make test	extra
+dust	du with a bar chart: where did the disk space go	dust -d 2	extra
+difftastic	Structural diff that understands syntax (use as git difftool)	git -c diff.external=difft diff	extra
+ast-grep	Search and rewrite code by syntax tree (command is sg or ast-grep)	ast-grep -p 'foo($A)' -l c	extra
+procs	ps replacement: colour, tree, search	procs --tree	extra
+tokei	Count lines of code per language	tokei src	extra
+jless	Read JSON in a terminal with folding and search	curl -s URL | jless	extra
+xh	Fast httpie-like HTTP client	xh get example.com	extra
