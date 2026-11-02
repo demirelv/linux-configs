@@ -1,42 +1,36 @@
 #!/bin/bash
+# Klasik vim ortami (Vundle + .vimrc). Ana install.sh bunu cagirmaz; gerekirse elle calistir:
+#   bash vim/install.sh
+set -euo pipefail
 
-# get latest vim
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# vim + araclar (Ubuntu deposundaki surum yeterli, PPA gerekmiyor)
 sudo apt-get update
-sudo add-apt-repository ppa:jonathonf/vim
-sudo apt-get update
-sudo apt-get install vim -y
+sudo apt-get install -y vim silversearcher-ag ripgrep universal-ctags cscope git curl
 
-# get the plugin manager: Vundle
-git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+# plugin manager: Vundle
+if [ ! -d "$HOME/.vim/bundle/Vundle.vim" ]; then
+    git clone https://github.com/VundleVim/Vundle.vim.git "$HOME/.vim/bundle/Vundle.vim"
+fi
 
-# install ag
-sudo apt install silversearcher-ag -y
+# fzf: shell entegrasyonu icin (.bashrc ~/.fzf.bash'i source ediyor)
+if [ ! -d "$HOME/.fzf" ]; then
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$HOME/.fzf"
+fi
+"$HOME/.fzf/install" --all --no-update-rc
 
-# install rg
-curl -LO https://github.com/BurntSushi/ripgrep/releases/download/12.1.1/ripgrep_12.1.1_amd64.deb
-sudo dpkg -i ripgrep_12.1.1_amd64.deb && rm ripgrep_12.1.1_amd64.deb
+# undo ve view dizinleri
+mkdir -p "$HOME/.vim/undodir" "$HOME/.vim/view"
 
-# install fzf, ask as yes all question for awesome future
-git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-~/.fzf/install
+# .vimrc'yi kopyala (farkliysa yedek al)
+if [ -e "$HOME/.vimrc" ] && ! cmp -s "$SCRIPT_DIR/.vimrc" "$HOME/.vimrc"; then
+    cp -a "$HOME/.vimrc" "$HOME/.vimrc.bak.$(date +%Y%m%d-%H%M%S)"
+fi
+cp "$SCRIPT_DIR/.vimrc" "$HOME/.vimrc"
 
-# install ctags
-sudo apt install ctags -y
-
-# install cscope
-sudo apt install cscope -y
-
-# create undodir
-mkdir ~/.vim/undodir
-
-# create view dir
-mkdir ~/.vim/view
-
-# copy .vimrc file to home directory
-cp .vimrc ~/
-
-# after install plugins install for c lang completer with following commands
-# cd ~/.vim/bundle/YouCompleteMe/
-# python3 install.py --clangd-completer
-# or give CXX for C++ compiler
-# CXX=/usr/bin/..g++ python3 install.py --clangd-completer
+# Eklentileri kurmak icin: vim +PluginInstall +qall
+# C dili completer icin (YouCompleteMe):
+#   cd ~/.vim/bundle/YouCompleteMe/
+#   python3 install.py --clangd-completer
+#   veya C++ derleyicisi ile: CXX=/usr/bin/g++ python3 install.py --clangd-completer

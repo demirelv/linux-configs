@@ -126,8 +126,8 @@ cdt() {
 	echo "Usage: ${FUNCNAME[0]} <ticket-name>"
 	return 1
     fi
-    mkdir -p ~/Documents/FixedIssues/$1
-    cd ~/Documents/FixedIssues/$1
+    mkdir -p ~/Documents/FixedIssues/"$1"
+    cd ~/Documents/FixedIssues/"$1"
 }
 # vim-ticket
 vimt() {
@@ -135,8 +135,8 @@ vimt() {
 	echo "Usage: ${FUNCNAME[0]} <ticket-name>"
 	return 1
     fi
-    mkdir -p ~/Documents/FixedIssues/$1
-    vim ~/Documents/FixedIssues/$1/notes.md
+    mkdir -p ~/Documents/FixedIssues/"$1"
+    vim ~/Documents/FixedIssues/"$1"/notes.md
 }
 
 # vim-jira
@@ -145,8 +145,8 @@ vimj() {
 	echo "Usage: ${FUNCNAME[0]} <ticket-name>"
 	return 1
     fi
-    mkdir -p ~/Documents/FixedIssues/$1
-    vim ~/Documents/FixedIssues/$1/notes.jira
+    mkdir -p ~/Documents/FixedIssues/"$1"
+    vim ~/Documents/FixedIssues/"$1"/notes.jira
 }
 
 # tmux-ticket
@@ -155,10 +155,10 @@ tmuxt() {
 	echo "Usage: ${FUNCNAME[0]} <ticket-name>"
 	return 1
     fi
-    CUR_TICKET=$1
+    CUR_TICKET="$1"
     IPADDR_BYTE=$(if [[ "$(echo "${CUR_TICKET}" | awk '{print substr ($0, 1, 3)}')" == "RTS" ]]; \
 	then echo "111"; else echo "2"; fi)
-    tmux a -t $1 || tmux new -s $1 \; \
+    tmux a -t "$1" || tmux new -s "$1" \; \
 	send-keys 'sudo minicom -w -D /dev/ttyUSB0 -c on' C-m \; \
 	split-window -v -p 40 \; \
 	send-keys "vimt $CUR_TICKET" C-m \; \
