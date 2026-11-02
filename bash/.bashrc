@@ -309,3 +309,44 @@ complete -F _tmj_complete tmj
 # Bu dosya repo'ya GIRMEZ; her makinede kendi ~/.bashrc.local'i olur.
 # shellcheck source=/dev/null
 [ -f ~/.bashrc.local ] && source ~/.bashrc.local
+
+# --- Istege bagli gelistirici araclari: KURULUYSA etkinlesir, yoksa sessizce atlanir ---
+# Kurulum: tools/install-tools.sh. Ne ise yaradiklari: `yardim araclar`.
+# Bu blok ~/.bashrc.local'dan SONRA gelir: ~/.local/bin PATH'e orada eklenir (fd/bat baglari orada).
+if command -v zoxide >/dev/null 2>&1; then eval "$(zoxide init bash)"; fi   # z <klasor>, zi
+if command -v direnv >/dev/null 2>&1; then eval "$(direnv hook bash)"; fi   # klasore girince .envrc yukler
+if command -v fd >/dev/null 2>&1; then                                       # fzf dosya listesi: hizli, .gitignore'a uyar
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+fi
+if command -v bat >/dev/null 2>&1; then                                      # Ctrl-T dosya secerken renkli onizleme
+    export FZF_CTRL_T_OPTS="--preview 'bat --color=always --style=numbers --line-range=:200 {}'"
+fi
+if command -v eza >/dev/null 2>&1; then alias lt='eza --tree --level=2'; fi  # ls agaci (2 seviye)
+
+# --- yardim: bu reponun dokumanlari (docs/*.md) terminalde ---
+# .bashrc repo'ya sembolik bagliysa dokumanlar bulunur (install.sh boyle kurar).
+_LC_DIR="$(cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." 2>/dev/null && pwd)"
+# Kullanim: yardim [konu] | yardim -l (konular) | yardim ara <kelime>   (varsayilan konu: ozet)
+yardim() {
+    local docs="$_LC_DIR/docs" topic="${1:-ozet}" f
+    if [ ! -d "$docs" ]; then echo "yardim: $docs yok (.bashrc repo'ya sembolik bagli degil)" >&2; return 1; fi
+    case "$topic" in
+        -l|--list|liste)
+            for f in "$docs"/*.md; do f="${f##*/}"; [ "$f" = INDEX.md ] || echo "${f%.md}"; done
+            return 0 ;;
+        ara)
+            shift
+            [ $# -gt 0 ] || { echo "kullanim: yardim ara <kelime>" >&2; return 1; }
+            grep -rniF --color=auto -- "$*" "$docs"
+            return 0 ;;
+    esac
+    f="$docs/$topic.md"
+    if [ ! -f "$f" ]; then echo "yardim: bilinmeyen konu '$topic'. Konular: $(yardim -l | tr '\n' ' ')" >&2; return 1; fi
+    if command -v bat >/dev/null 2>&1; then bat --style=plain --paging=auto -l md -- "$f"; else "${PAGER:-less}" -R -- "$f"; fi
+}
+_yardim_complete() {
+    [ "$COMP_CWORD" -eq 1 ] || return 0
+    mapfile -t COMPREPLY < <(compgen -W "$(yardim -l 2>/dev/null) ara" -- "${COMP_WORDS[COMP_CWORD]}")
+}
+complete -F _yardim_complete yardim

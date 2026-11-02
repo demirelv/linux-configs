@@ -4,18 +4,21 @@
 #   ./install.sh                    # varsayilan kurulum (nvim + araclar + dotfile'lar)
 #   ./install.sh --with-wireshark   # wireshark'i da kur
 #   ./install.sh --no-dotfiles      # dotfile kurulumunu atla
+#   ./install.sh --with-tools       # tum gelistirici araclarini kur (varsayilan: core + git gruplari)
+#   ./install.sh --no-tools         # gelistirici araclarini kurma
 #   ./install.sh -h                 # yardim
 
 set -euo pipefail
 
 WITH_WIRESHARK=0
 WITH_DOTFILES=1
+TOOLS=default
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/link.sh
 source "$REPO_DIR/lib/link.sh"
 
 usage() {
-    sed -n '2,8p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '2,10p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
     exit 0
 }
 
@@ -23,6 +26,8 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --with-wireshark) WITH_WIRESHARK=1 ;;
         --no-dotfiles)    WITH_DOTFILES=0 ;;
+        --with-tools)     TOOLS=all ;;
+        --no-tools)       TOOLS=none ;;
         -h|--help)        usage ;;
         *) echo "Bilinmeyen parametre: $1 (yardim icin -h)" >&2; exit 1 ;;
     esac
@@ -105,6 +110,13 @@ if [ "$WITH_DOTFILES" -eq 1 ]; then
     clone_pinned https://github.com/tmux-plugins/tmux-continuum \
         "$HOME/.tmux/plugins/tmux-continuum" 0698e8f4b17d6454c71bf5212895ec055c578da0
 fi
+
+# Gelistirici araclari (delta, fd, bat, zoxide, cppcheck ...): dotfile'lardan SONRA, git include'u ~/.gitconfig'e eklensin diye
+case "$TOOLS" in
+    default) echo "==> gelistirici araclari (core + git)"; bash "$REPO_DIR/tools/install-tools.sh" ;;
+    all)     echo "==> gelistirici araclari (tum gruplar)"; bash "$REPO_DIR/tools/install-tools.sh" all ;;
+    none)    echo "==> gelistirici araclari atlandi (sonra: tools/install-tools.sh)" ;;
+esac
 
 echo
 echo "Kurulum tamam. Yeni bir terminal ac (veya: source ~/.bashrc)."
