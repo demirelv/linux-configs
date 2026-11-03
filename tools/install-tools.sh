@@ -20,7 +20,7 @@ source "$REPO_DIR/lib/link.sh"
 declare -A TOOL_GROUPS=(
     [core]="cppcheck clang-tidy clang-format bear git-delta fd-find bat eza zoxide direnv shellcheck"
     [c-debug]="strace gdb bpftrace linux-tools-KERNEL ltrace rr lcov doxygen"
-    [net]="tshark binwalk qemu-user-static tio lnav moreutils mosh sshfs socat"
+    [net]="tshark binwalk qemu-user-static tio lnav moreutils mosh sshfs socat python3-scapy tcpdump tcpreplay ngrep termshark wavemon iperf3 mtr-tiny fping hping3 nmap netperf dnsutils radvd ndisc6 snmp iw"
     [git]="tig pre-commit"
     [misc]="entr hyperfine ncdu duf just tmuxp httpie tldr pv visidata"
     [dev]="ripgrep git-absorb gping"
@@ -125,6 +125,10 @@ if [ "$dry" -eq 1 ]; then echo "(--dry-run: bir sey kurulmadi)"; exit 0; fi
 if [ ${#to_install[@]} -gt 0 ]; then
     sudo_cmd=()
     if [ "$(id -u)" -ne 0 ]; then read -r -a sudo_cmd <<<"${TOOLS_SUDO-sudo}"; fi
+        # iperf3 paketi "servis olarak baslatilsin mi" diye debconf sorusu acar (-y bunu gizlemez): onceden "hayir" cevapla
+    if printf '%s\n' "${to_install[@]}" | grep -qx iperf3; then
+        echo "iperf3 iperf3/start_daemon boolean false" | "${sudo_cmd[@]}" debconf-set-selections
+    fi
     "${sudo_cmd[@]}" apt-get install -y "${to_install[@]}"
 fi
 

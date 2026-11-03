@@ -58,7 +58,7 @@ tools/install-tools.sh all                      # tum gruplar
 | `--dry-run` | Ne kurulacagini yazar, hicbir sey kurmaz |
 | `core` | varsayilan: cppcheck, clang-tidy, clang-format, bear, git-delta, fd-find, bat, eza, zoxide, direnv, shellcheck |
 | `c-debug` | strace, gdb, bpftrace, perf (linux-tools-<uname -r>), ltrace, rr, lcov, doxygen |
-| `net` | tshark, binwalk, qemu-user-static, tio (seri konsol), lnav, moreutils, mosh, sshfs, socat |
+| `net` | tshark, binwalk, qemu-user-static, tio (seri konsol), lnav, moreutils, mosh, sshfs, socat, python3-scapy, tcpdump, tcpreplay, ngrep, termshark, wavemon, iperf3, mtr-tiny, fping, hping3, nmap, netperf, dnsutils, radvd, ndisc6, snmp, iw |
 | `git` | varsayilan: tig, pre-commit |
 | `misc` | entr, hyperfine, ncdu, duf, just, tmuxp, httpie, tldr, pv, visidata |
 | `dev` | ripgrep, git-absorb, gping |

@@ -32,6 +32,10 @@ cat > "$bin/apt-get" <<'EOS'
 #!/usr/bin/env bash
 printf '%s\n' "$*" >> "$STUB_LOG"
 EOS
+cat > "$bin/debconf-set-selections" <<'EOS'
+#!/usr/bin/env bash
+printf 'debconf %s\n' "$(cat)" >> "$STUB_LOG"
+EOS
 chmod +x "$bin"/*
 # PATH kontrollu: sistemin /usr/bin'i, ama fd/fdfind/bat/batcat/delta gorunmeden (kurulu olsalar testi bozar).
 sysbin="$tmp/sysbin"; mkdir -p "$sysbin"
@@ -52,7 +56,16 @@ ok "dev grubu ripgrep git-absorb gping kurar" has "$(run --dry-run dev)" "kurula
 cdbg="$(run --dry-run c-debug)"
 ok "c-debug: strace gdb bpftrace kurulur" has "$cdbg" "strace gdb bpftrace"
 ok "c-debug: perf calisan kernel'in paketiyle (linux-tools-\$(uname -r))" has "$cdbg" "linux-tools-$(uname -r)"
-ok "net grubu socat kurar" has "$(run --dry-run net)" "socat"
+netdry="$(run --dry-run net)"
+: > "$STUB_LOG"; run net >/dev/null
+ok "iperf3 sorusu onceden cevaplanir (servis otomatik baslamaz, dialog acilmaz)" has "$(cat "$STUB_LOG")" "iperf3 iperf3/start_daemon boolean false"
+ok "debconf cevabi apt-get'ten once" test "$(grep -n -m1 debconf "$STUB_LOG" | cut -d: -f1)" -lt "$(grep -n -m1 'install -y' "$STUB_LOG" | cut -d: -f1)"
+ok "net grubu socat kurar" has "$netdry" "socat"
+netmiss=""
+for p in python3-scapy tcpdump tcpreplay ngrep termshark wavemon iperf3 mtr-tiny fping hping3 nmap netperf dnsutils radvd ndisc6 snmp iw; do
+    has "$netdry" "$p" || netmiss="$netmiss $p"
+done
+ok "net grubu ag arac seti: scapy tcpdump tcpreplay ngrep termshark wavemon iperf3 mtr fping hping3 nmap netperf dig radvdump ndisc6 snmp iw${netmiss:+ (eksik:$netmiss)}" test -z "$netmiss"
 ok "misc grubu pv ve visidata kurar" has "$(run --dry-run misc)" "pv visidata"
 
 printf 'eza\n' > "$STUB_MISSING"; printf 'bat\n' > "$STUB_INSTALLED"

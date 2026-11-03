@@ -100,6 +100,9 @@ head_ "optional tools"
 declare -A CMD=(
     [cppcheck]=cppcheck [clang-tidy]=clang-tidy [clang-format]=clang-format [bear]=bear [git-delta]=delta
     [fd-find]="fd fdfind" [bat]="bat batcat" [eza]=eza [zoxide]=zoxide [direnv]=direnv [shellcheck]=shellcheck
+    [python3-scapy]=scapy [tcpdump]=tcpdump [tcpreplay]=tcpreplay [ngrep]=ngrep [termshark]=termshark [wavemon]=wavemon
+    [iperf3]=iperf3 [mtr-tiny]=mtr [fping]=fping [hping3]=hping3 [nmap]=nmap [netperf]=netperf [dnsutils]=dig [radvd]=radvdump
+    [ndisc6]=rdisc6 [snmp]=snmpwalk [iw]=iw
     [strace]=strace [gdb]=gdb [bpftrace]=bpftrace [linux-tools-KERNEL]=perf [socat]=socat [pv]=pv [visidata]=vd [glow]=glow
     [ltrace]=ltrace [rr]=rr [lcov]=lcov [doxygen]=doxygen [tshark]=tshark [binwalk]=binwalk
     [qemu-user-static]=qemu-arm-static [tio]=tio [lnav]=lnav [moreutils]=ts [mosh]=mosh [sshfs]=sshfs

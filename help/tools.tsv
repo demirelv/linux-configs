@@ -38,6 +38,23 @@ just	Command runner with a simple Justfile syntax	just build
 tmuxp	Define tmux layouts in YAML	tmuxp load session.yaml
 httpie	Readable HTTP client	http GET example.com
 tldr	Short, practical examples for commands	tldr tar
+python3-scapy	Python packet crafting, sniffing and fuzzing (scapy shell)	sudo scapy   # then: sr1(IP(dst="192.168.1.1")/ICMP())
+tcpdump	Capture packets on an interface (also on the router)	sudo tcpdump -ni eth0 -w out.pcap 'port 67 or port 68'
+tcpreplay	Replay a pcap onto an interface at chosen speed	sudo tcpreplay -i eth0 --mbps=10 out.pcap
+ngrep	grep for network traffic: regex over live or pcap payloads	sudo ngrep -d any -q 'HTTP/1.1' port 80
+termshark	Wireshark-like terminal UI (uses tshark)	termshark -r out.pcap
+wavemon	Live Wi-Fi signal, noise and link quality monitor	wavemon
+iperf3	Throughput test between two hosts (TCP/UDP, parallel streams)	iperf3 -s   # server; client: iperf3 -c HOST -P 4
+mtr-tiny	mtr: ping and traceroute in one, finds the hop that loses packets	mtr -rwc 50 8.8.8.8
+fping	Ping many hosts at once, script friendly	fping -a -g 192.168.1.0/24
+hping3	Craft TCP/UDP/ICMP probes (firewall and latency tests)	sudo hping3 -S -p 80 -c 5 HOST
+nmap	Port scan and service detection (own devices and authorized networks only)	nmap -sV -p 1-1024 192.168.1.1
+netperf	Network throughput and latency (request/response) benchmark	netserver; netperf -H HOST -t TCP_RR
+dnsutils	dig: DNS queries (package provides dig, nslookup)	dig +short example.com @192.168.1.1
+radvd	radvdump: show IPv6 router advertisements (the radvd daemon stays unconfigured)	sudo radvdump
+ndisc6	rdisc6, ndisc6: IPv6 router and neighbour discovery probes	rdisc6 eth0
+snmp	snmpget, snmpwalk: read device MIBs over SNMP	snmpwalk -v2c -c public 192.168.1.1 system
+iw	Wi-Fi interface tool: channel, band, station list, scan	iw dev wlan0 station dump
 socat	Relay between sockets, serial ports, files and pipes	socat -d -d TCP-LISTEN:9000,reuseaddr,fork /dev/ttyUSB0,raw,b115200
 pv	Show progress, speed and ETA of data through a pipe	pv big.img | gzip > big.img.gz
 visidata	Terminal spreadsheet for CSV, xlsx and JSON (sort, filter, pivot)	vd "Bugs reported in MR5.xlsx"

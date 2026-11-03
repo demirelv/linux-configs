@@ -50,6 +50,23 @@ Betik yalnizca apt'te bulunan ve kurulu olmayan paketleri kurar; olmayani atlar 
 | net | `mosh`, `sshfs` | Kopmayan uzak oturum; uzak dosya sistemini yerel klasor gibi bagla |
 | git | `tig` | Terminalde git gecmisi/blame gezgini |
 | git | `pre-commit` | Commit kancasi cercevesi. NOT: bu repo `core.hooksPath` kullandigi icin burada `pre-commit install` calismaz; baska repolarda kullan |
+| net | `python3-scapy` | Python ile paket uret/yakala/fuzz et (`scapy` komutu) |
+| net | `tcpdump` | Arayuzde paket yakalar; router uzerinde de calisir |
+| net | `tcpreplay` | Yakalanmis pcap'i istenen hizda arayuze tekrar oynatir |
+| net | `ngrep` | Canli trafikte ya da pcap'te payload icinde regex arar |
+| net | `termshark` | Terminalde Wireshark benzeri arayuz (`tshark` kullanir) |
+| net | `wavemon` | Canli Wi-Fi sinyal, gurultu ve baglanti kalitesi |
+| net | `iperf3` | Iki makine arasi throughput testi (TCP/UDP, paralel akis) |
+| net | `mtr-tiny` | `mtr`: ping + traceroute birlikte, kayip yapan hop'u bulur |
+| net | `fping` | Cok sayida hosta ayni anda ping, betik dostu |
+| net | `hping3` | Ozel TCP/UDP/ICMP probe uretir (firewall ve gecikme testi) |
+| net | `nmap` | Port tarama ve servis tespiti. Yalniz kendi cihazlarinda ve yetkili agda |
+| net | `netperf` | Throughput ve istek/cevap gecikmesi olcer (`netserver` karsi tarafta) |
+| net | `dnsutils` | `dig`, `nslookup`: DNS sorgulari |
+| net | `radvd` | `radvdump`: IPv6 router advertisement gosterir (radvd servisi ayarsiz kalir, kullanilmaz) |
+| net | `ndisc6` | `rdisc6`, `ndisc6`: IPv6 router ve komsu kesfi |
+| net | `snmp` | `snmpget`, `snmpwalk`: cihaz MIB'lerini SNMP ile okur |
+| net | `iw` | Wi-Fi arayuz araci: kanal, bant, istasyon listesi, tarama |
 | net | `socat` | Soket, seri port, dosya ve boru arasi aktarim (ornek: seri portu TCP'ye ac) |
 | misc | `pv` | Boru icinden gecen verinin ilerleme/hiz/kalan sure gostergesi |
 | misc | `visidata` | Terminalde tablo: CSV, xlsx, JSON ac, sirala, filtrele, pivot (`vd dosya.xlsx`) |
