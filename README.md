@@ -57,12 +57,12 @@ tools/install-tools.sh all                      # tum gruplar
 |---|---|
 | `--dry-run` | Ne kurulacagini yazar, hicbir sey kurmaz |
 | `core` | varsayilan: cppcheck, clang-tidy, clang-format, bear, git-delta, fd-find, bat, eza, zoxide, direnv, shellcheck |
-| `c-debug` | ltrace, rr, lcov, doxygen |
-| `net` | tshark, binwalk, qemu-user-static, tio (seri konsol), lnav, moreutils, mosh, sshfs |
+| `c-debug` | strace, gdb, bpftrace, perf (linux-tools-<uname -r>), ltrace, rr, lcov, doxygen |
+| `net` | tshark, binwalk, qemu-user-static, tio (seri konsol), lnav, moreutils, mosh, sshfs, socat |
 | `git` | varsayilan: tig, pre-commit |
-| `misc` | entr, hyperfine, ncdu, duf, just, tmuxp, httpie, tldr |
+| `misc` | entr, hyperfine, ncdu, duf, just, tmuxp, httpie, tldr, pv, visidata |
 | `dev` | ripgrep, git-absorb, gping |
-| `extra` | apt'te olmayanlar: `cargo install --locked` (surum sabitli, derleme dakikalar surer) ve `uv` (pipx). starship, atuin, watchexec, dust, difftastic, ast-grep, procs, tokei, xh; ayrica `vtop` GitHub'dan klonlanip derlenir (`~/.local/bin`) |
+| `extra` | apt'te olmayanlar: `cargo install --locked` (surum sabitli, derleme dakikalar surer) ve `uv` (pipx). starship, atuin, watchexec, dust, difftastic, ast-grep, procs, tokei, xh, glow (snap); ayrica `vtop` GitHub'dan klonlanip derlenir (`~/.local/bin`) |
 | `all` | hepsi |
 
 Not: `mise` icin rustc 1.95 gerekir, elle kurulur ([docs/araclar.md](docs/araclar.md)). Her aracin ne ise yaradigi ve

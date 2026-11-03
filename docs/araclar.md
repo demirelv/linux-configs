@@ -33,8 +33,12 @@ Betik yalnizca apt'te bulunan ve kurulu olmayan paketleri kurar; olmayani atlar 
 | core | `zoxide` | `z <ad>` ile sik gidilen klasore atla |
 | core | `direnv` | Klasore girince `.envrc` yukler (toolchain `PATH`, `CROSS_COMPILE`) |
 | core | `shellcheck` | Kabuk betigi denetleyicisi (`check.sh` kullanir) |
+| c-debug | `strace` | Programin sistem cagrilarini izler (hangi dosya/soket/sinyal) |
+| c-debug | `gdb` | GNU hata ayiklayici: breakpoint, backtrace, core dosyasi |
+| c-debug | `bpftrace` | eBPF ile tek satirlik izleme (root ister) |
+| c-debug | `linux-tools-KERNEL` | `perf`: CPU profili ve donanim sayaclari. KERNEL = `uname -r`; betik calisan kernel'in paketini kurar |
 | c-debug | `rr` | Kaydet ve geri sar hata ayiklama (nadir hatalar icin). Donanim sayaci gerekir, sanal makinede calismayabilir |
-| c-debug | `ltrace` | Kutuphane cagrilarini izler (`strace` zaten kurulu) |
+| c-debug | `ltrace` | Kutuphane cagrilarini izler |
 | c-debug | `lcov` | Kod kapsama raporu |
 | c-debug | `doxygen` | Kod dokumantasyonu uretir |
 | net | `tshark` | Wireshark'in komut satiri hali, capture dosyasi analizi |
@@ -46,6 +50,9 @@ Betik yalnizca apt'te bulunan ve kurulu olmayan paketleri kurar; olmayani atlar 
 | net | `mosh`, `sshfs` | Kopmayan uzak oturum; uzak dosya sistemini yerel klasor gibi bagla |
 | git | `tig` | Terminalde git gecmisi/blame gezgini |
 | git | `pre-commit` | Commit kancasi cercevesi. NOT: bu repo `core.hooksPath` kullandigi icin burada `pre-commit install` calismaz; baska repolarda kullan |
+| net | `socat` | Soket, seri port, dosya ve boru arasi aktarim (ornek: seri portu TCP'ye ac) |
+| misc | `pv` | Boru icinden gecen verinin ilerleme/hiz/kalan sure gostergesi |
+| misc | `visidata` | Terminalde tablo: CSV, xlsx, JSON ac, sirala, filtrele, pivot (`vd dosya.xlsx`) |
 | misc | `entr` | Dosya degisince komut calistirir |
 | misc | `hyperfine` | Komut suresini istatistikle olcer |
 | misc | `ncdu`, `duf` | Disk kullanimi gezgini; bos alan tablosu |
@@ -116,12 +123,13 @@ Her biri `lc-help tool <ad>` ile aranabilir. Hepsi kuruluysa `.bashrc` kendiligi
 | `procs` | `ps` yerine: renk, agac, arama | `cargo install --locked procs --version 0.14.12` |
 | `tokei` | Dile gore kod satiri sayar | `cargo install --locked tokei --version 15.0.0` |
 | `xh` | Hizli httpie benzeri HTTP istemcisi | `cargo install --locked xh --version 0.26.3` |
+| `glow` | Markdown'i terminalde bicimli gosterir | `sudo snap install glow` (apt'te yok; Go araci, `install-tools.sh extra` snap ile kurar) |
 | `vtop` | `top` benzeri surec izleyici (C, kendi yazimim): ayni programi gruplar, PSI, disk G/C | kaynaktan: `git clone https://github.com/demirelv/vtop` + `make install PREFIX=~/.local` (commit `de41a78` sabit) |
 
 `vtop` crates.io'da degil: `install-tools.sh extra` GitHub'dan klonlar, sabit commit'e alir, derler ve `~/.local/bin/vtop`'a kurar
 (sudo yok; `/usr/bin/vtop` gibi eski bir kopya kurulumu engellemez, yeni kopya PATH'te onde gelir).
 
-Kurmadan once crate'in sahibine ve son surum tarihine bak (supply-chain). `jless` kurulmuyor (derlemek icin `libxcb-*-dev` paketleri gerekir). `glow` ve `jira-cli` Go ile yazili;
+Kurmadan once crate'in sahibine ve son surum tarihine bak (supply-chain). `jless` kurulmuyor (derlemek icin `libxcb-*-dev` paketleri gerekir). `jira-cli` Go ile yazili;
 bilerek eklenmedi.
 
 Git icin `git/.gitconfig` artik `pull.rebase`, `fetch.prune`, `rerere`, `diff.algorithm=histogram` ve

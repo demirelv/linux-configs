@@ -19,10 +19,10 @@ source "$REPO_DIR/lib/link.sh"
 
 declare -A TOOL_GROUPS=(
     [core]="cppcheck clang-tidy clang-format bear git-delta fd-find bat eza zoxide direnv shellcheck"
-    [c-debug]="ltrace rr lcov doxygen"
-    [net]="tshark binwalk qemu-user-static tio lnav moreutils mosh sshfs"
+    [c-debug]="strace gdb bpftrace linux-tools-KERNEL ltrace rr lcov doxygen"
+    [net]="tshark binwalk qemu-user-static tio lnav moreutils mosh sshfs socat"
     [git]="tig pre-commit"
-    [misc]="entr hyperfine ncdu duf just tmuxp httpie tldr"
+    [misc]="entr hyperfine ncdu duf just tmuxp httpie tldr pv visidata"
     [dev]="ripgrep git-absorb gping"
 )
 ALL_GROUPS=(core c-debug net git misc dev)
@@ -48,6 +48,10 @@ EXTRA_TOOLS=(
 SOURCE_TOOLS=(
     "vtop|${TOOLS_VTOP_URL:-https://github.com/demirelv/vtop.git}|${TOOLS_VTOP_REF:-de41a7807fd0aafd2f409c5a4885de3767bb4527}"
 )
+# snap ile kurulanlar (apt'te yok, Go araci): komut|snap adi. Kurulu sayilir: PATH'te ya da /snap/bin altinda.
+SNAP_TOOLS=(
+    "glow|glow"
+)
 want_extra=0
 
 dry=0
@@ -68,6 +72,7 @@ candidate() { apt-cache policy "$1" 2>/dev/null | awk '/Candidate:/{print $2}'; 
 to_install=(); have=(); missing=()
 for g in "${groups[@]}"; do
     for p in ${TOOL_GROUPS[$g]}; do
+        p="${p/KERNEL/$(uname -r)}"   # perf paketi kernel surumune bagli: linux-tools-<uname -r>
         if dpkg -s "$p" >/dev/null 2>&1; then have+=("$p")
         else
             c="$(candidate "$p")"
@@ -77,7 +82,7 @@ for g in "${groups[@]}"; do
 done
 
 # extra grubu cargo ve pipx ister: yoksa apt ile kurulur
-extra_todo=(); extra_have=(); src_todo=()
+extra_todo=(); extra_have=(); src_todo=(); snap_todo=()
 if [ "$want_extra" -eq 1 ]; then
     for e in "${EXTRA_TOOLS[@]}"; do
         IFS='|' read -r cmd _ _ <<<"$e"
@@ -87,6 +92,10 @@ if [ "$want_extra" -eq 1 ]; then
     for e in "${SOURCE_TOOLS[@]}"; do
         IFS='|' read -r cmd _ _ <<<"$e"
         if [ -x "$HOME/.local/bin/$cmd" ]; then extra_have+=("$cmd"); else src_todo+=("$e"); fi
+    done
+    for e in "${SNAP_TOOLS[@]}"; do
+        IFS='|' read -r cmd _ <<<"$e"
+        if command -v "$cmd" >/dev/null 2>&1 || [ -x "/snap/bin/$cmd" ]; then extra_have+=("$cmd"); else snap_todo+=("$e"); fi
     done
     if [ ${#src_todo[@]} -gt 0 ]; then
         command -v git >/dev/null 2>&1 || to_install+=(git)
@@ -107,6 +116,7 @@ if [ "$want_extra" -eq 1 ]; then
     echo "  cargo/pipx   : $(for e in "${extra_todo[@]}"; do IFS='|' read -r _ crate ver <<<"$e"; printf '%s@%s ' "$crate" "$ver"; done)"
     src_label="$(for e in "${src_todo[@]}"; do IFS='|' read -r cmd _ ref <<<"$e"; printf '%s@%s ' "$cmd" "${ref:0:7}"; done)"
     echo "  kaynaktan    : ${src_label:-yok}"
+    echo "  snap         : $(for e in "${snap_todo[@]}"; do IFS='|' read -r _ sn <<<"$e"; printf '%s ' "$sn"; done)"
     echo "  extra kurulu : ${extra_have[*]:-yok}"
 fi
 
@@ -144,6 +154,12 @@ if [ "$want_extra" -eq 1 ]; then
                 && make -C "$work/src" \
                 && make -C "$work/src" install PREFIX="$HOME/.local"
         ) || extra_failed+=("$cmd")
+    done
+    for e in "${snap_todo[@]}"; do
+        IFS='|' read -r cmd sn <<<"$e"
+        echo "==> $cmd (snap $sn)"
+        snap_sudo=(); if [ "$(id -u)" -ne 0 ]; then read -r -a snap_sudo <<<"${TOOLS_SUDO-sudo}"; fi
+        { command -v snap >/dev/null 2>&1 && "${snap_sudo[@]}" snap install "$sn"; } || extra_failed+=("$cmd")
     done
     if [ ${#extra_failed[@]} -gt 0 ]; then echo "UYARI: kurulamayan extra araclar: ${extra_failed[*]}" >&2; fi
 fi

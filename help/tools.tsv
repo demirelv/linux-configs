@@ -12,6 +12,10 @@ eza	ls replacement that can draw a tree (alias lt)	lt
 zoxide	Jump to frequently used directories	z linux-configs
 direnv	Loads and unloads a .envrc when you enter or leave a directory	direnv allow
 shellcheck	Static analysis for shell scripts	shellcheck -x script.sh
+strace	Trace system calls of a program (what files, sockets, signals it touches)	strace -f -e trace=network -o out.txt ./program
+gdb	GNU debugger: breakpoints, backtraces, core files	gdb -ex run --args ./program arg
+bpftrace	One-liner kernel/user tracing with eBPF (needs root)	sudo bpftrace -e 'tracepoint:syscalls:sys_enter_openat { printf("%s %s\\n", comm, str(args->filename)); }'
+linux-tools-KERNEL	perf: CPU profiler and hardware counters (package follows the running kernel)	perf record -g ./program && perf report
 ltrace	Trace library calls of a program	ltrace ./program
 rr	Record and replay debugging (needs hardware counters, may not work in a VM)	rr record ./program && rr replay
 lcov	Code coverage report from gcov data	lcov --capture --directory . --output-file cov.info
@@ -34,6 +38,9 @@ just	Command runner with a simple Justfile syntax	just build
 tmuxp	Define tmux layouts in YAML	tmuxp load session.yaml
 httpie	Readable HTTP client	http GET example.com
 tldr	Short, practical examples for commands	tldr tar
+socat	Relay between sockets, serial ports, files and pipes	socat -d -d TCP-LISTEN:9000,reuseaddr,fork /dev/ttyUSB0,raw,b115200
+pv	Show progress, speed and ETA of data through a pipe	pv big.img | gzip > big.img.gz
+visidata	Terminal spreadsheet for CSV, xlsx and JSON (sort, filter, pivot)	vd "Bugs reported in MR5.xlsx"
 ripgrep	Fast recursive grep that respects .gitignore (Telescope live grep uses it)	rg -n 'TODO' src/
 git-absorb	Turns staged changes into fixup commits for the right earlier commits	git absorb --and-rebase
 gping	Ping with a live graph	gping 8.8.8.8
@@ -47,6 +54,7 @@ difftastic	Structural diff that understands syntax (use as git difftool)	git -c 
 ast-grep	Search and rewrite code by syntax tree (command is sg or ast-grep)	ast-grep -p 'foo($A)' -l c	extra
 procs	ps replacement: colour, tree, search	procs --tree	extra
 tokei	Count lines of code per language	tokei src	extra
+glow	Render markdown in the terminal (snap; not in apt)	glow README.md	extra
 xh	Fast httpie-like HTTP client	xh get example.com	extra
 rg	Show line numbers	rg -n PATTERN	usage
 rg	Only one file type (c, py, ...)	rg -t c PATTERN	usage

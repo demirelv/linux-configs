@@ -37,7 +37,7 @@ chmod +x "$bin"/*
 sysbin="$tmp/sysbin"; mkdir -p "$sysbin"
 for f in /usr/bin/* /bin/*; do
     n="${f##*/}"
-    case "$n" in fd|fdfind|bat|batcat|delta) continue ;; esac
+    case "$n" in fd|fdfind|bat|batcat|delta|snap|glow) continue ;; esac
     [ -e "$sysbin/$n" ] || ln -s "$f" "$sysbin/$n" 2>/dev/null || true
 done
 export PATH="$bin:$sysbin"
@@ -49,6 +49,11 @@ ok "dry-run: kurulacaklari listeler, bir sey kurmaz" bash -c '[[ "$1" == *"kurul
 ok "dry-run: varsayilan gruplar core + git" has "$(run --dry-run)" "Gruplar: core git"
 ok "bilinmeyen grup hata verir" not bash "$REPO/tools/install-tools.sh" xyz
 ok "dev grubu ripgrep git-absorb gping kurar" has "$(run --dry-run dev)" "kurulacak    : ripgrep git-absorb gping"
+cdbg="$(run --dry-run c-debug)"
+ok "c-debug: strace gdb bpftrace kurulur" has "$cdbg" "strace gdb bpftrace"
+ok "c-debug: perf calisan kernel'in paketiyle (linux-tools-\$(uname -r))" has "$cdbg" "linux-tools-$(uname -r)"
+ok "net grubu socat kurar" has "$(run --dry-run net)" "socat"
+ok "misc grubu pv ve visidata kurar" has "$(run --dry-run misc)" "pv visidata"
 
 printf 'eza\n' > "$STUB_MISSING"; printf 'bat\n' > "$STUB_INSTALLED"
 out="$(run --dry-run core)"
@@ -92,7 +97,12 @@ cat > "$bin/pipx" <<'EOS'
 #!/usr/bin/env bash
 printf 'pipx %s\n' "$*" >> "$STUB_LOG"
 EOS
-chmod +x "$bin/cargo" "$bin/pipx"
+cat > "$bin/snap" <<'EOS'
+#!/usr/bin/env bash
+printf 'snap %s\n' "$*" >> "$STUB_LOG"
+case "$*" in *failsnap*) exit 1 ;; esac
+EOS
+chmod +x "$bin/cargo" "$bin/pipx" "$bin/snap"
 
 # vtop kaynaktan kurulur (git clone + make install): ag yok, sahte yerel git deposu ve sabit commit
 vsrc="$tmp/vtop-src"; mkdir -p "$vsrc"
@@ -133,6 +143,19 @@ out="$(TOOLS_VTOP_URL="$tmp/yok" run extra || true)"
 ok "vtop: klon basarisizsa digerleri durmaz, vtop raporlanir" has "$out" "kurulamayan extra araclar: tokei vtop"
 run extra >/dev/null 2>&1 || true
 ok "vtop: sonraki calistirma kurar" test -x "$HOME/.local/bin/vtop"
+
+# glow: apt'te yok, snap ile kurulur (sudo komutu TOOLS_SUDO ile degisir); kurulu ise atlanir
+: > "$STUB_LOG"; run extra >/dev/null 2>&1 || true
+ok "glow: snap install glow cagrilir" has "$(cat "$STUB_LOG")" "snap install glow"
+ok "glow: dry-run snap listesinde" has "$(run --dry-run extra)" "snap         : glow"
+printf '#!/bin/sh\n' > "$bin/glow"; chmod +x "$bin/glow"
+: > "$STUB_LOG"; run extra >/dev/null 2>&1 || true
+ok "glow: kurulu iken tekrar kurulmaz" not has "$(cat "$STUB_LOG")" "snap install"
+rm -f "$bin/glow"
+mv "$bin/snap" "$bin/snap.off"
+out="$(run extra || true)"
+ok "glow: snap yoksa raporlanir, digerleri durmaz" has "$out" "kurulamayan extra araclar: tokei glow"
+mv "$bin/snap.off" "$bin/snap"
 
 # atuin ilk kurulum: bash gecmisi bir kez iceri alinir, yukari ok tum gecmisi arar (idempotent)
 printf '#!/bin/sh\nprintf "atuin %%s\\n" "$*" >> "$STUB_LOG"\n' > "$bin/atuin"; chmod +x "$bin/atuin"
